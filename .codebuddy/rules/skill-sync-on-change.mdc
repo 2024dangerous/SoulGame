@@ -1,0 +1,67 @@
+---
+description: 
+alwaysApply: true
+enabled: true
+updatedAt: 2026-03-21T18:18:24.075Z
+provider: 
+---
+
+# Skill 实时同步规则
+
+## 规则目的
+每次代码变更后，自动更新对应的 skill 文档，确保 AI 对项目的理解与实际代码保持同步。
+
+## 触发条件
+当对项目文件进行以下操作时，必须更新对应 skill：
+- 新增类/模块
+- 删除类/模块
+- 重命名类/方法
+- 修改类/模块的核心功能
+- 添加新的枚举类型
+- 添加新的组件
+- 修改模块间的依赖关系
+
+## 操作步骤
+
+### 1. 确定受影响的 Skill
+根据修改的文件路径，确定对应的 skill：
+
+| 文件路径 | 对应 Skill |
+|----------|------------|
+| `SoulGameCharacter/` | `soulgame-character` |
+| `SoulGameAI/` | `soulgame-ai` |
+| `SoulGameItem/` | `soulgame-item` |
+| `SoulGameHUD/` | `soulgame-hud` |
+| `SoulGameEvent/` | `soulgame-event` |
+| `SoulObjectPool/` | `soulgame-objectpool` |
+| 多个模块/项目整体 | `soulgame` (主 skill) |
+
+### 2. 读取当前 Skill
+修改前先读取目标 skill 文件，了解当前内容。
+
+### 3. 更新 Skill
+根据代码变更内容，更新 skill 的以下部分：
+- **新增内容**：添加到相关章节
+- **删除内容**：从 skill 中移除
+- **修改内容**：更新描述、参数、接口等
+
+### 4. 同步主 Skill
+如果修改影响多个模块或核心架构，还需要更新 `soulgame` 主 skill。
+
+## Skill 文件位置
+```
+d:/Unreal Projects/SoulGame/.codebuddy/skills/
+├── soulgame/SKILL.md
+├── soulgame-character/SKILL.md
+├── soulgame-ai/SKILL.md
+├── soulgame-item/SKILL.md
+├── soulgame-hud/SKILL.md
+├── soulgame-event/SKILL.md
+└── soulgame-objectpool/SKILL.md
+```
+
+## 更新原则
+- **及时性**：在完成代码修改后，立即更新 skill
+- **准确性**：如实反映代码的当前状态
+- **简洁性**：突出关键变更，避免冗余
+- **可读性**：保持文档结构清晰，便于快速查阅
