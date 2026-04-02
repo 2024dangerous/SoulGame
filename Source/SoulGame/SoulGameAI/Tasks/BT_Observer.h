@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -6,11 +6,14 @@
 #include "BehaviorTree/BTTaskNode.h"
 #include "BT_Observer.generated.h"
 
-/**
- * 
- */
 class ASoulAIController;
-class AShadowSpecter;
+class ASoulBaseEnemy;
+
+/**
+ * BT_Observer - AI 观察任务（数据驱动版）
+ * 
+ * AI 进入观察模式，绕行目标
+ */
 UCLASS()
 class SOULGAME_API UBT_Observer : public UBTTaskNode
 {
@@ -18,7 +21,7 @@ class SOULGAME_API UBT_Observer : public UBTTaskNode
 
 	ASoulAIController* AIController;
 
-	AShadowSpecter* AICharacter;
+	ASoulBaseEnemy* AICharacter;
 
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory);
 

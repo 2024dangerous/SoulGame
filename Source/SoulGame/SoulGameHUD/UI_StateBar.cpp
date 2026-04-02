@@ -16,7 +16,7 @@ void UUI_StateBar::NativeConstruct()
 	InitializeBarVisuals();
 
 }
-// 自动同步变量到界面
+// 鑷姩鍚屾鍙橀噺鍒扮晫闈?
 void UUI_StateBar::SynchronizeProperties()
 {
 	Super::SynchronizeProperties();
@@ -26,14 +26,14 @@ void UUI_StateBar::SynchronizeProperties()
 		Text_StateBar->SetText(FText::FromString(UpdateNameText));
 	}
 }
-//初始化材质，设置动态材质
+//鍒濆鍖栨潗璐紝璁剧疆鍔ㄦ€佹潗璐?
 void UUI_StateBar::SetDynamicMaterials()
 {
 	BarBorderMID = BarBorder->GetDynamicMaterial();
     BarFillMID = BarFill->GetDynamicMaterial();
     BarGlowMID = BarGlow->GetDynamicMaterial();
 }
-//重置动画状态
+//閲嶇疆鍔ㄧ敾鐘舵€?
 void UUI_StateBar::ResetAnimatedState()
 {
     BarBorderMID->SetScalarParameterValue(FName("Animate_Damage"), 0.0f);
@@ -50,7 +50,7 @@ void UUI_StateBar::ResetAnimatedState()
 	BarBorderMID->SetScalarParameterValue(FName("Animate_Glow_ColorChange"), 0.0f);
 	BarGlowMID->SetScalarParameterValue(FName("Animate_Glow_ColorChange"), 0.0f);
 }
-//初始化血条视觉效果
+//鍒濆鍖栬鏉¤瑙夋晥鏋?
 void UUI_StateBar::InitializeBarVisuals()
 {
 	BarBorderMID->SetScalarParameterValue(FName("Health_Current"), 1.0f);
@@ -69,7 +69,7 @@ void UUI_StateBar::EventOnEliminated()
 	PlayAnimation(OnEliminated, 0.f, 1, EUMGSequencePlayMode::Forward, 1.f, false);
 }
 
-//设置血条的当前值
+//璁剧疆琛€鏉＄殑褰撳墠鍊?
 void UUI_StateBar::ValueChanged(float OldValue, float NewValue,float MaxValue)
 {
 	BarBorderMID->SetScalarParameterValue(FName("Health_Current"), (OldValue / MaxValue));

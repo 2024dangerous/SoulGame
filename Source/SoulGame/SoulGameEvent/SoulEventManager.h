@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -6,7 +6,6 @@
 #include "UObject/Object.h"
 #include "GameplayTags.h"
 #include "SoulMessage.h"
-#include "SoulGameData/SoulEnumType.h"
 #include "SoulEventManager.generated.h"
 
 // 前向声明
@@ -23,8 +22,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnGameplayTagStateChanged, FGame
 DECLARE_DELEGATE_TwoParams(FNearbyInteractables, AActor*, bool);
 // 打开/关闭战斗UI
 DECLARE_DELEGATE_OneParam(FOpenFightUI, bool);
-// 状态值变化多播
-DECLARE_MULTICAST_DELEGATE_FourParams(FOnStatusBoxChanged, EStatusBox, float, float, float);
 // 打开/关闭设置菜单
 DECLARE_DELEGATE_OneParam(FOpenSetMenu, bool);
 // 打开/关闭交互UI
@@ -37,18 +34,20 @@ DECLARE_DELEGATE(FOpenFightResult);
 DECLARE_DELEGATE_TwoParams(FSwitchEnemyHealth, FName, float);
 
 /**
- * SoulEventManager - 基于 GameplayTags 的消息路由管理器（单例）
+ * SoulEventManager - 基于 GameplayTags 的事件管理器
  * 
- * 特性：
- * - 消息路由：支持通道、优先级过滤
- * - 安全订阅：使用委托句柄管理订阅生命周期
- * - 层级匹配：支持 GameplayTag 父子标签匹配
- * - 兼容旧API：保留传统委托方式兼容
+ * 功能：
+ * - 信息传递：发送和接收信息
+ * - 事件订阅：订阅和取消订阅事件
+ * - 状态改变：处理状态改变事件
+ * - 损伤事件：处理伤害事件
+ * - 死亡事件：处理死亡事件
+ * - 武器改变：处理武器改变事件
  * 
- * 使用方式：
+ * 使用方法：
  * 1. 通过 Get() 获取单例
- * 2. 使用 SendMessage() 发送消息
- * 3. 使用 Subscribe() 订阅消息，返回句柄用于取消订阅
+ * 2. 使用 SendMessage() 发送信息
+ * 3. 使用 Subscribe() 订阅信息
  */
 UCLASS(Blueprintable, BlueprintType)
 class SOULGAME_API USoulEventManager : public UObject
@@ -67,12 +66,12 @@ public:
 	static USoulEventManager* Get();
 
 	/**
-	 * 初始化（由 GameInstance 调用）
+	 * 初始化，通常在 GameInstance 中使用
 	 */
 	void Initialize();
 
 	/**
-	 * 关闭（由 GameInstance 调用）
+	 * 关闭，通常在 GameInstance 中使用
 	 */
 	void Deinitialize();
 
@@ -96,9 +95,6 @@ public:
 	// 打开/关闭交互UI
 	FOpenInteractionUI OpenInteractionUI;
 
-	// 状态值变化多播
-	FOnStatusBoxChanged OnStatusBoxChanged;
-
 	// 打开/关闭敌人血条
 	FOpenEnemyHealth OpenEnemyHealth;
 
@@ -108,7 +104,7 @@ public:
 	// 切换敌人血条
 	FSwitchEnemyHealth SwitchEnemyHealth;
 
-	// ============ 消息发送 API（新版）============
+	// ============ 信息传递 API（新版）============
 
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Events")
 	void SendMessage(const FSoulMessage& Message);

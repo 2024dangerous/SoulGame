@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -154,5 +154,5 @@ public:
 protected:
 	// ============ USoulGameConfigBase ============
 
-	virtual bool ValidateConfig(FText& OutError) ;
+	virtual bool ValidateConfig_Implementation(FText& OutError) override;
 };

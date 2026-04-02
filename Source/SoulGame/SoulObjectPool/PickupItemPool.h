@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "ObjectPoolBase.h"
@@ -12,27 +12,27 @@ class SOULGAME_API UPickupItemPool : public UObjectPoolBase
     GENERATED_BODY()
 
 public:
-    // ³õÊ¼»¯³Ø×Ó
+    // åˆå§‹åŒ–æ± å­
     virtual void InitializePool(int32 InitialSize) override;
 
-    // ´Ó³ØÖĞ»ñÈ¡Ò»¸ö APickupItem ÊµÀı
+    // ä»æ± ä¸­è·å–ä¸€ä¸ª APickupItem å®ä¾‹
     virtual UObject* AcquireObject(UWorld* World) override;
 
-    // ½«Ê¹ÓÃÍêµÄ¶ÔÏó¹é»¹³ØÖĞ
+    // å°†ä½¿ç”¨å®Œçš„å¯¹è±¡å½’è¿˜æ± ä¸­
     virtual void ReleaseObject(UObject* Object) override;
 
 protected:
-    // Êµ¼ÊÓÃÓÚ´æ´¢¿ÉÓÃ¶ÔÏóµÄÈİÆ÷
+    // å®é™…ç”¨äºå­˜å‚¨å¯ç”¨å¯¹è±¡çš„å®¹å™¨
     UPROPERTY()
     TArray<APickupItem*> PooledItems;
 
-    // ÓÃÓÚÖ¸¶¨Éú³ÉµÄActorÀàĞÍ£¨¿É»»³É×ÓÀà£©
+    // ç”¨äºæŒ‡å®šç”Ÿæˆçš„Actorç±»å‹ï¼ˆå¯æ¢æˆå­ç±»ï¼‰
     TSubclassOf<APickupItem> ItemClass;
 
-    // µ±Ç°ËùÔÚµÄWorldÖ¸Õë£¬ÊµÀı»¯ActorÊ±ÓÃ
+    // å½“å‰æ‰€åœ¨çš„WorldæŒ‡é’ˆï¼Œå®ä¾‹åŒ–Actoræ—¶ç”¨
     UWorld* WorldContext;
 
 public:
-    // ÉèÖÃÉú³ÉµÄActorÀàĞÍºÍWorld£¨Äã¿ÉÒÔÔÚ´´½¨Ê±ÉèÖÃ£©
+    // è®¾ç½®ç”Ÿæˆçš„Actorç±»å‹å’ŒWorldï¼ˆä½ å¯ä»¥åœ¨åˆ›å»ºæ—¶è®¾ç½®ï¼‰
     virtual void SetupPool(TSubclassOf<AActor> ActorClass, UWorld* World) override;
 };

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -17,6 +17,6 @@ class SOULGAME_API USoulGameWidgetRule : public UUserWidget
 protected:
 	virtual void NativeConstruct() override;
 public:
-	// ×Ô¶¯Í¬²½±äÁ¿µ½½çÃæ
+	// è‡ªåŠ¨åŒæ­¥å˜é‡åˆ°ç•Œé¢
 	virtual void SynchronizeProperties() override;
 };

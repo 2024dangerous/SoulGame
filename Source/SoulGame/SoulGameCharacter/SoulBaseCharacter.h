@@ -9,6 +9,8 @@
 #include "Delegates/DelegateCombinations.h"
 #include "SoulGameTags/SoulGameplayTagInterface.h"
 #include "SoulGameTags/SoulStateMachineComponent.h"
+#include "AbilitySystemInterface.h"
+#include "AttributeSet.h"
 #include "SoulBaseCharacter.generated.h"
 
 //绑定输入的宏定义（判断是否有Input）
@@ -20,8 +22,14 @@ class UInputAction;
 class UUI_FightMainUI;
 class APickupItem;
 class ASoulBaseEnemy;
+class USoulAbilitySystemComponent;
+class USoulAttributeSet;
+class USoulGameplayAbility;
+class USoulPickupComponent;
+class USoulPerceptionComponent;
+
 UCLASS()
-class SOULGAME_API ASoulBaseCharacter : public ACharacter, public ISoulGameplayTagInterface
+class SOULGAME_API ASoulBaseCharacter : public ACharacter, public ISoulGameplayTagInterface, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -50,18 +58,30 @@ public:
 	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = Camera , meta = (AllowPrivateAccess = "true"))
     class USpringArmComponent* CameraBoom;
 
-    //圆形碰撞体组件（用于感知敌人）
-	UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = Camera , meta = (AllowPrivateAccess = "true"))
-    class USphereComponent* PerceptionEnemy;
+    //摄像机最小臂长
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
+	float CameraMinArmLength = 200.f;
 
-	UFUNCTION()
-	void AddPerceptionEnemy(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	//摄像机最大臂长
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
+	float CameraMaxArmLength = 600.f;
 
-	UFUNCTION()
-	void SubPerceptionEnemy(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	//摄像机默认臂长
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
+	float CameraDefaultArmLength = 350.f;
 
-	UPROPERTY()
-	TArray<ASoulBaseEnemy*> EnemyArray; //敌人数组
+	//摄像机缩放步长
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Camera")
+	float CameraZoomStep = 10.f;
+
+    //圆形碰撞体组件（用于感知敌人）——已迁移到 USoulPerceptionComponent
+	// 敌人感知组件
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Perception")
+	USoulPerceptionComponent* PerceptionComponent;
+
+	// 获取感知组件
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Perception")
+	USoulPerceptionComponent* GetPerceptionComponent() const { return PerceptionComponent; }
 #pragma endregion "Base"
 #pragma region "Input"
     //输入系统
@@ -100,7 +120,6 @@ public:
     UInputAction* FocusAction;     //注视——Q键
 	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category ="Input | BaseInput")
     UInputAction* ExitAction;     //退出——Esc键
-
     
     void Move(const FInputActionValue& Value);      //移动
     virtual void Look(const FInputActionValue& Value);      //视角
@@ -115,7 +134,6 @@ public:
 	void Visibility(const FInputActionValue& Value);//摄像头远近
 	void ShowMouse(const FInputActionValue& Value); //显示鼠标
 	void Interaction(const FInputActionValue& Value);//交互
-	
 
 	//拳法攻击检测
 	UFUNCTION(BlueprintCallable)
@@ -123,6 +141,22 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Melee")
 	float MeleeCollisionRadius;
+
+	//拳法攻击伤害值（可配置）
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Melee")
+	float MeleeCollisionDamage = 10.f;
+
+	//默认行走速度
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement")
+	float DefaultWalkSpeed = 500.f;
+
+	//静步速度
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement")
+	float SlowWalkSpeed = 200.f;
+
+	//冲刺速度
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Movement")
+	float SprintSpeed = 900.f;
 
 	//获取增强输入的值（float）
 	UFUNCTION(BlueprintCallable)
@@ -180,54 +214,66 @@ public:
 	void InitializeStateMachine();
 
 #pragma endregion "GameplayTags"
+#pragma region "GAS"
+	// ============ GAS (GameplayAbilitySystem) ============
+public:
+	// IAbilitySystemInterface 接口实现
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+	// 获取自定义 ASC
+	UFUNCTION(BlueprintCallable, Category = "SoulGame|GAS")
+	USoulAbilitySystemComponent* GetSoulAbilitySystemComponent() const;
+
+	// 获取属性集
+	UFUNCTION(BlueprintCallable, Category = "SoulGame|GAS")
+	const USoulAttributeSet* GetSoulAttributeSet() const;
+
+	// 初始化 GAS（在 BeginPlay 或 PossessedBy 中调用）
+	UFUNCTION(BlueprintCallable, Category = "SoulGame|GAS")
+	void InitializeGAS();
+
+	// 将旧属性值同步到 GAS AttributeSet
+	void SyncAttributeToGAS(const FGameplayAttribute& Attribute, float NewValue);
+
+protected:
+	// 技能系统组件
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SoulGame|GAS")
+	USoulAbilitySystemComponent* AbilitySystemComponent;
+
+	// 属性集
+	UPROPERTY()
+	const USoulAttributeSet* AttributeSet;
+
+	// 默认授予的技能列表（在编辑器中配置）
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SoulGame|GAS")
+	TArray<TSubclassOf<USoulGameplayAbility>> DefaultAbilities;
+
+	// GAS 是否已初始化
+	bool bGASInitialized = false;
+
+#pragma endregion "GAS"
 #pragma region "Attribute"
 //玩家属性
 public:
 #pragma region "Health"
-   //玩家基础属性
-	//生命值
+   //生命值（作为 GAS 的本地缓存，优先通过 GAS 读写）
    UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Health")
    float MaxHealth;
 
    UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Health")
    float CurrentHealth;
-
-   //修改后的体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Health")
-   float NewHealth;
-
-   //消耗体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Health")
-   float SubHealth;
-
-   //恢复体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Health")
-   float AddHealth;
 #pragma endregion "Health"
 
 #pragma region "Mana"
-   //玩家基础属性
-	//生命值
+   //法力值（作为 GAS 的本地缓存，优先通过 GAS 读写）
    UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Mana")
    float MaxMana;
 
    UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Mana")
    float CurrentMana;
-
-   //修改后的体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Mana")
-   float NewMana;
-
-   //消耗体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Mana")
-   float SubMana;
-
-   //恢复体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Mana")
-   float AddMana;
 #pragma endregion "Mana"
 #pragma region "Stamina"
-   //最大体力值
+   //最大体力值（作为 GAS 的本地缓存，优先通过 GAS 读写）
    UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Stamina") 
    float MaxStamina;
 
@@ -235,30 +281,25 @@ public:
    UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Stamina")
    float CurrentStamina;
 
-   //修改后的体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Stamina")
-   float NewStamina;
+   // 体力恢复速率（每 Tick 恢复 StaminaRestoreRate * DeltaTime）
+   UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Player|Attribute|Stamina")
+   float StaminaRestoreRate;
 
-   //消耗体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Stamina")
-   float SubStamina;
-
-   //恢复体力值
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "Player|Attribute|Stamina")
-   float AddStamina;
+   // 上次动作的体力消耗阈值（用于判断是否关闭"体力不足"提示）
+   float LastStaminaCostThreshold;
 
    
 public:
-    // 修改耐力并广播（你可以在其他逻辑中调用这个函数）
+    // 修改生命值并广播（同时同步到 GAS）
     UFUNCTION(BlueprintCallable)
-	virtual void SetHealth(float InCurrentHealth,float InNewHealth,float InMaxHealth);
-	// 修改耐力并广播（你可以在其他逻辑中调用这个函数）
+	virtual void SetHealth(float InNewHealth);
+	// 修改法力值并广播（同时同步到 GAS）
     UFUNCTION(BlueprintCallable)
-	virtual void SetMana(float InCurrentMana,float InNewMana,float InMaxMana);
+	virtual void SetMana(float InNewMana);
 
-	// 修改耐力并广播（你可以在其他逻辑中调用这个函数）
+	// 修改体力值并广播（同时同步到 GAS）
     UFUNCTION(BlueprintCallable)
-	virtual void SetStamina(float InCurrentStamina,float InNewStamina,float InMaxStamina);
+	virtual void SetStamina(float InNewStamina);
 #pragma endregion "Stamina" 
 #pragma region "SoulEnumType"
 
@@ -277,23 +318,27 @@ public:
 #pragma region "Function"
   //获取玩家状态
    
-    //获取玩家生命值
+    //获取玩家生命值（优先从 GAS 读取）
    UFUNCTION(BlueprintCallable,BlueprintPure)
-   float GetHealth() const { return CurrentHealth; }
+   float GetHealth() const;
      
-    //获取玩家当前体力值
+    //获取玩家当前体力值（优先从 GAS 读取）
    UFUNCTION(BlueprintCallable,BlueprintPure)
-   float GetCurrentStamina() const { return CurrentStamina; }
+   float GetCurrentStamina() const;
+
+    //获取玩家当前法力值（优先从 GAS 读取）
+   UFUNCTION(BlueprintCallable,BlueprintPure)
+   float GetCurrentMana() const;
 #pragma endregion "Function"
 #pragma endregion "Attribute" 
 #pragma region "PickUp"
-   UPROPERTY(EditDefaultsOnly,BlueprintReadWrite,Category = "PickUp")
-   TArray<APickupItem*> PickupItemArray; //拾取物品数组
+   // 拾取交互组件（管理附近可拾取物品列表和交互UI）
+   UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "PickUp")
+   USoulPickupComponent* PickupComponent;
 
-   void SetPickupItemArray(APickupItem* PickupItem, bool bIsAddOrSub); //设置拾取物品数组
-   void OnNearbyInteractablesChanged(AActor* PickupItem, bool bIsAddOrSub); //包装函数，适配委托签名
-
-   void SetInteractionUIVisibility(); //设置物品拾取UI可见性
+   // 获取拾取组件
+   UFUNCTION(BlueprintCallable, BlueprintPure, Category = "PickUp")
+   USoulPickupComponent* GetPickupComponent() const { return PickupComponent; }
 #pragma endregion "PickUp"
 public:
 	int32 RollingForwordValue;    //翻滚朝向值（前后）
@@ -328,6 +373,4 @@ public:
 	bool bIsShouldRotate = false;
 #pragma endregion "Function"
 
-	UFUNCTION(BlueprintCallable)
-	virtual void fhnaof();
 };

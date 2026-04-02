@@ -43,7 +43,15 @@ when: |
 | `OnPlayerExitPickupRange()` | 玩家离开拾取范围，隐藏UI |
 
 ### 事件触发
-玩家进入/离开拾取范围时，通过 `SoulEventManager::NearbyInteractables` 委托通知UI显示交互提示。
+玩家进入/离开拾取范围时，通过 `SoulEventManager::NearbyInteractables` 委托通知 `USoulPickupComponent`（拾取交互组件）管理物品列表和交互UI。
+
+### 与 USoulPickupComponent 的交互流程
+```
+PickupItem 进入范围 → SoulEventManager::NearbyInteractables 委托
+→ USoulPickupComponent::OnNearbyInteractablesChanged()
+→ AddPickupItem() → UpdateInteractionUI()
+→ 按 F 键 → SoulBaseCharacter::Interaction() → PickupComponent->PickupAllItems()
+```
 
 ## 物品类型枚举
 

@@ -8,10 +8,10 @@ public class SoulGame : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",  "Slate", 
-        "SlateCore","UMG" ,  "Niagara" ,"AIModule" ,"GameplayTasks", "GameplayTags" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput",
+        "GameplayTasks", "GameplayTags", "GameplayAbilities" });
 
-        PrivateDependencyModuleNames.AddRange(new string[] {  });
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore", "UMG", "Niagara", "AIModule" });
 
         PublicIncludePaths.Add("SoulGame");
 

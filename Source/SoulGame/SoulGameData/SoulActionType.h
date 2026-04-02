@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "SoulActionType.generated.h"
 
-//¶¯×÷ÏûºÄÌåÁ¦±í
+//åŠ¨ä½œæ¶ˆè€—ä½“åŠ›è¡¨
 USTRUCT(BlueprintType)
 struct FSoulActionType : public FTableRowBase
 {
@@ -13,15 +13,15 @@ struct FSoulActionType : public FTableRowBase
 public:
 
   
-    // ÏûºÄµÄÌåÁ¦Öµ
+    // æ¶ˆè€—çš„ä½“åŠ›å€¼
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float StaminaAnimCost = 0.f;
 
-    // ¶¯×÷ÀäÈ´Ê±¼ä£¨¿ÉÑ¡£©
+    // åŠ¨ä½œå†·å´æ—¶é—´ï¼ˆå¯é€‰ï¼‰
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     float Cooldown= 0.f;
 
-    // ¶¯×÷²¥·ÅµÄMontage£¨¿ÉÑ¡£©
+    // åŠ¨ä½œæ’­æ”¾çš„Montageï¼ˆå¯é€‰ï¼‰
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<UAnimMontage*> AnimMontage = {};
 

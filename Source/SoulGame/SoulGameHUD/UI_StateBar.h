@@ -24,18 +24,18 @@ protected:
     virtual void NativeConstruct() override;
 
 public:
-	// 自动同步变量到界面
+	// 鑷姩鍚屾鍙橀噺鍒扮晫闈?
 	virtual void SynchronizeProperties() override;
 #pragma region "WidgetComponent"
-	//状态栏文字
+	//鐘舵€佹爮鏂囧瓧
 	UPROPERTY(BlueprintReadWrite,meta= (BindWidget))
 	UTextBlock* Text_StateBar;
 
-	//状态栏血条
+	//鐘舵€佹爮琛€鏉?
     UPROPERTY(BlueprintReadWrite,meta= (BindWidget))
 	UOverlay* Overlay_StateBar;
 
-    //状态栏血条背景
+    //鐘舵€佹爮琛€鏉¤儗鏅?
 	 UPROPERTY(BlueprintReadWrite,meta= (BindWidget))
 	 UImage* BarBorder;
 
@@ -65,25 +65,25 @@ public:
     UWidgetAnimation* OnSpawned;
 #pragma endregion "WidgetAnimation"
 
-	//暴露给父控件，实时更改文本
+	//鏆撮湶缁欑埗鎺т欢锛屽疄鏃舵洿鏀规枃鏈?
     UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Attribute")
 	FString UpdateNameText = TEXT("Text Black");
 
-	//判断是否为生命值,使用不同逻辑
+	//鍒ゆ柇鏄惁涓虹敓鍛藉€?使用不同逻辑
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category = "Attribute")
 	bool bIsHealth = false;
 
-	//是否在动画中
+	//鏄惁鍦ㄥ姩鐢讳腑
 	bool bIsAnimating = false;
 
 public:
-    //初始化材质，设置动态材质
+    //鍒濆鍖栨潗璐紝璁剧疆鍔ㄦ€佹潗璐?
 	UFUNCTION(BlueprintCallable)
 	 void SetDynamicMaterials();
-	//重置动画状态
+	//閲嶇疆鍔ㄧ敾鐘舵€?
 	UFUNCTION(BlueprintCallable)
 	 void ResetAnimatedState();
-     //初始化血条视觉效果
+     //鍒濆鍖栬鏉¤瑙夋晥鏋?
 	UFUNCTION(BlueprintCallable)
 	 void InitializeBarVisuals();
      //死亡动画
@@ -91,7 +91,7 @@ public:
 	 void EventOnEliminated();
 
 
-     //设置血条的当前值
+     //璁剧疆琛€鏉＄殑褰撳墠鍊?
 	UFUNCTION(BlueprintCallable)
 	void ValueChanged(float OldValue,float NewValue, float MaxValue);
 

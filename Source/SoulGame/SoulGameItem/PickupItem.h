@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -20,7 +20,7 @@ class SOULGAME_API APickupItem : public AItemBase , public IPoolableInterface
 	GENERATED_BODY()
 	
 public:
-    // Ìí¼ÓÕâÁ½ÐÐº¯ÊýÉùÃ÷
+    // æ·»åŠ è¿™ä¸¤è¡Œå‡½æ•°å£°æ˜Ž
     virtual void OnPooledObjectSpawn() override;
     virtual void OnPooledObjectDespawn() override;
 

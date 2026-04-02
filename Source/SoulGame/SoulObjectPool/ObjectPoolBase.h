@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "ObjectPoolBase.generated.h"
 
 /**
- * ·ºÓÃµÄ¶ÔÏó³Ø»ùÀà
+ * æ³›ç”¨çš„å¯¹è±¡æ± åŸºç±»
  */
 UCLASS(Abstract, Blueprintable)
 class SOULGAME_API UObjectPoolBase : public UObject
@@ -13,13 +13,13 @@ class SOULGAME_API UObjectPoolBase : public UObject
     GENERATED_BODY()
 
 public:
-    // ³õÊ¼»¯¶ÔÏó³Ø£¨ÅÉÉúÀà±ØĞëÊµÏÖ£©
+    // åˆå§‹åŒ–å¯¹è±¡æ± ï¼ˆæ´¾ç”Ÿç±»å¿…é¡»å®ç°ï¼‰
     virtual void InitializePool(int32 InitialSize) PURE_VIRTUAL(UObjectPoolBase::InitializePool, );
 
-    // »ñÈ¡Ò»¸ö¿ÉÓÃ¶ÔÏó£¨ÅÉÉúÀà±ØĞëÊµÏÖ£©
+    // è·å–ä¸€ä¸ªå¯ç”¨å¯¹è±¡ï¼ˆæ´¾ç”Ÿç±»å¿…é¡»å®ç°ï¼‰
     virtual UObject* AcquireObject(UWorld* World) PURE_VIRTUAL(UObjectPoolBase::AcquireObject, return nullptr;);
 
-    // »ØÊÕ¶ÔÏó£¨ÅÉÉúÀà±ØĞëÊµÏÖ£©
+    // å›æ”¶å¯¹è±¡ï¼ˆæ´¾ç”Ÿç±»å¿…é¡»å®ç°ï¼‰
     virtual void ReleaseObject(UObject* Object) PURE_VIRTUAL(UObjectPoolBase::ReleaseObject, );
 
     virtual void SetupPool(TSubclassOf<AActor> ActorClass, UWorld* World) {}

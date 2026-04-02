@@ -2,18 +2,20 @@
 
 
 #include "SoulGameAI/ShadowSpecter.h"
-#include "../SoulGameData/SoulActionType.h"
-#include "../../../../../../../Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Components/SphereComponent.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Components/BoxComponent.h"
-#include "../SoulGameCharacter/SoulBaseCharacter.h"
-#include "../SoulGameDebug/DebugTools.h"
+#include "SoulGameData/SoulActionType.h"
+#include "NiagaraComponent.h"
+#include "Components/SphereComponent.h"
+#include "Components/BoxComponent.h"
+#include "SoulGameCharacter/SoulBaseCharacter.h"
+#include "SoulGameDebug/DebugTools.h"
 #include "SoulAIController.h"
-#include "../../../../../../../Source/Runtime/AIModule/Classes/BehaviorTree/BlackboardComponent.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Kismet/KismetMathLibrary.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 #include <GameFramework/CharacterMovementComponent.h>
-#include "../SoulGameEvent/SoulEventManager.h"
-#include "../../../../../../../Source/Runtime/Core/Public/Math/UnrealMathUtility.h"
+#include "SoulGameEvent/SoulEventManager.h"
+#include "Math/UnrealMathUtility.h"
+#include "SoulGameGAS/SoulAbilitySystemComponent.h"
+#include "SoulGameGAS/SoulAttributeSet.h"
 
 AShadowSpecter::AShadowSpecter()
 {
@@ -22,7 +24,7 @@ AShadowSpecter::AShadowSpecter()
     SwordNiagara = CreateDefaultSubobject<UNiagaraComponent>(TEXT("PlayerSwordNiagara"));
     SwordNiagara->SetupAttachment(Sword);
 
-    ChangeWeaponMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/_MySoulGame/Characters/_MoYing/Materials/MI_Sword_Niagara.MI_Sword_Niagara"));
+    ChangeWeaponMaterial = nullptr; // 通过编辑器配置 ChangeWeaponMaterialAsset 软引用加载
 
     SwordSheath = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PlayerSwordSheath"));
     SwordSheath->SetupAttachment(GetMesh(), "SwordSheath");
@@ -38,12 +40,22 @@ AShadowSpecter::AShadowSpecter()
 
     bIsAttacking = false;
     InitLocation = {0,0,0};
-    RandeomStrafeValue = -1.f;
+    RandomStrafeValue = -1.f;
 }
 
 void AShadowSpecter::BeginPlay()
 {
     Super::BeginPlay();
+
+    // 加载切换武器材质（从编辑器配置的软引用加载）
+    if (ChangeWeaponMaterialAsset.IsValid())
+    {
+        ChangeWeaponMaterial = ChangeWeaponMaterialAsset.Get();
+    }
+    else if (!ChangeWeaponMaterialAsset.IsNull())
+    {
+        ChangeWeaponMaterial = ChangeWeaponMaterialAsset.LoadSynchronous();
+    }
 
     InitLocation = GetActorLocation(); 
 
@@ -102,7 +114,7 @@ void AShadowSpecter::InitAnimMontage()
         SwordRollingAnims = AnimMontageTable->FindRow<FSoulActionType>(FName(TEXT("SwordRollingAnims")), TEXT("InitEnemyActionAnimations"));
         RushAttackAnims = AnimMontageTable->FindRow<FSoulActionType>(FName(TEXT("RushAttackAnims")), TEXT("InitEnemyActionAnimations"));
         InjuryAnims = AnimMontageTable->FindRow<FSoulActionType>(FName(TEXT("InjuryAnims")), TEXT("InitEnemyActionAnimations"));
-        DenfenseAnims = AnimMontageTable->FindRow<FSoulActionType>(FName(TEXT("DenfenseAnims")), TEXT("InitEnemyActionAnimations"));
+        DefenseAnims = AnimMontageTable->FindRow<FSoulActionType>(FName(TEXT("DenfenseAnims")), TEXT("InitEnemyActionAnimations")); // 注意：数据表行名保持"DenfenseAnims"不变，与资产一致
     }
 
     //安全处理，如果没有找到对应的行，则使用默认值
@@ -114,14 +126,18 @@ void AShadowSpecter::InitAnimMontage()
     if (!SwordRollingAnims) SwordRollingAnims = &DefaultAction;
     if (!RushAttackAnims) RushAttackAnims = &DefaultAction;
     if (!InjuryAnims) InjuryAnims = &DefaultAction;
-    if (!DenfenseAnims) DenfenseAnims = &DefaultAction;
+    if (!DefenseAnims) DefenseAnims = &DefaultAction;
 }
 
 void AShadowSpecter::Injure(float SubHealth)
 {
     CurrentHealth = FMath::Clamp(CurrentHealth - SubHealth,0.f,MaxHealth);
+    // 同步到 GAS
+    if (AbilitySystemComponent && bGASInitialized)
+    {
+        AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetHealthAttribute(), CurrentHealth);
+    }
     USoulEventManager::Get()->SwitchEnemyHealth.ExecuteIfBound(EnemyName, CurrentHealth / MaxHealth);
-    ZhouXiaoPeng_PRINT(TEXT("daijdaiwfw"));
 }
 
 void AShadowSpecter::Attack()
@@ -209,14 +225,13 @@ void AShadowSpecter::EnableObServer()
 {
     if (UKismetMathLibrary::RandomBool())
     {
-        RandeomStrafeValue = 1.f;
+        RandomStrafeValue = 1.f;
     }
     else
     {
-        RandeomStrafeValue = -1.f;
+        RandomStrafeValue = -1.f;
     }
-    GetWorldTimerManager().SetTimer(ObserverHandle, this,&AShadowSpecter::ObserverMove, 0.001f,true);
-    ZhouXiaoPeng_PRINT(TEXT("dfafafawf"));
+    GetWorldTimerManager().SetTimer(ObserverHandle, this, &AShadowSpecter::ObserverMove, 0.016f, true);
 }
 
 
@@ -224,7 +239,7 @@ void AShadowSpecter::ObserverMove()
 {
     const FRotator LocalRotation = GetActorRotation();
     const FVector LocalVector = FRotationMatrix(FRotator(0,LocalRotation.Yaw,0)).GetUnitAxis(EAxis::Y);
-    AddMovementInput(LocalVector, RandeomStrafeValue);
+    AddMovementInput(LocalVector, RandomStrafeValue);
 }
 
 void AShadowSpecter::EndObserver()

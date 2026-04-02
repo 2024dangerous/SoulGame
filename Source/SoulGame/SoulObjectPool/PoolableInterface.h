@@ -1,10 +1,10 @@
-#pragma once
+ï»¿#pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "PoolableInterface.generated.h"
 
-// Õâ¸ö UINTERFACE ÊÇ±ØĞëµÄºê½á¹¹£¬¹©À¶Í¼Ê¶±ğ
+// è¿™ä¸ª UINTERFACE æ˜¯å¿…é¡»çš„å®ç»“æ„ï¼Œä¾›è“å›¾è¯†åˆ«
 UINTERFACE(MinimalAPI)
 class UPoolableInterface : public UInterface
 {
@@ -12,16 +12,16 @@ class UPoolableInterface : public UInterface
 };
 
 /**
- * ¶ÔÏó³Ø½Ó¿Ú£ºÈÃ±»³Ø»¯µÄ¶ÔÏóÖ§³Ö×Ô¶¨ÒåĞĞÎª
+ * å¯¹è±¡æ± æ¥å£ï¼šè®©è¢«æ± åŒ–çš„å¯¹è±¡æ”¯æŒè‡ªå®šä¹‰è¡Œä¸º
  */
 class SOULGAME_API IPoolableInterface
 {
     GENERATED_BODY()
 
 public:
-    // µ±¶ÔÏó±»´Ó³ØÖĞÈ¡³öÊ¹ÓÃÊ±µ÷ÓÃ
+    // å½“å¯¹è±¡è¢«ä»æ± ä¸­å–å‡ºä½¿ç”¨æ—¶è°ƒç”¨
     virtual void OnPooledObjectSpawn() = 0;
 
-    // µ±¶ÔÏó±»»ØÊÕµ½³ØÖĞÊ±µ÷ÓÃ
+    // å½“å¯¹è±¡è¢«å›æ”¶åˆ°æ± ä¸­æ—¶è°ƒç”¨
     virtual void OnPooledObjectDespawn() = 0;
 };

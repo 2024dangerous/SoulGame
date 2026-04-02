@@ -1,30 +1,39 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameAI/Tasks/BT_Observer.h"
-#include "../SoulAIController.h"
-#include "../SoulBaseEnemy.h"
-#include "../../../../../../../Source/Runtime/AIModule/Classes/BehaviorTree/BlackboardComponent.h"
-#include "../ShadowSpecter.h"
+#include "SoulGameAI/SoulAIController.h"
+#include "SoulGameAI/SoulBaseEnemy.h"
+#include "SoulGameAI/Config/SoulAIConfig.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 EBTNodeResult::Type UBT_Observer::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
     AIController = Cast<ASoulAIController>(OwnerComp.GetAIOwner());
+    if (!AIController) return EBTNodeResult::Failed;
 
-    bool Isob =  AIController->GetBlackboardComponent()->GetValueAsBool("ObserverDoOnce");
-    if (AIController)
+    UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent();
+    if (!BlackboardComp) return EBTNodeResult::Failed;
+
+    bool IsOb = BlackboardComp->GetValueAsBool("ObserverDoOnce");
+
+    AICharacter = Cast<ASoulBaseEnemy>(AIController->GetPawn());
+    if (AICharacter && IsOb)
     {
-        AICharacter = Cast<AShadowSpecter>(AIController->GetPawn());
-        if (AICharacter && Isob)
-        {
-            AIController->GetBlackboardComponent()->SetValueAsBool("ObserverDoOnce", false);
-        }
+        BlackboardComp->SetValueAsBool("ObserverDoOnce", false);
     }
+
     return EBTNodeResult::Type();
 }
 
 void UBT_Observer::EndObserver()
 {
-    AIController->GetBlackboardComponent()->SetValueAsBool("IsObserver", false);
-    AIController->GetBlackboardComponent()->SetValueAsBool("ObserverDoOnce", false);
+    if (AIController)
+    {
+        UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent();
+        if (BlackboardComp)
+        {
+            BlackboardComp->SetValueAsBool("IsObserver", false);
+            BlackboardComp->SetValueAsBool("ObserverDoOnce", false);
+        }
+    }
 }

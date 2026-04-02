@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -9,7 +9,7 @@
 
 /**
  * GameplayTag 接口
- * 所有需要支持 GameplayTags 的 Actor 需要实现此接口
+ * 鎵€鏈夐渶瑕佹敮鎸?GameplayTags 鐨?Actor 闇€瑕佸疄鐜版鎺ュ彛
  */
 UINTERFACE(Blueprintable, BlueprintType)
 class SOULGAME_API USoulGameplayTagInterface : public UInterface
@@ -22,31 +22,31 @@ class SOULGAME_API ISoulGameplayTagInterface
 	GENERATED_BODY()
 
 public:
-	// 获取标签容器
+	// 鑾峰彇鏍囩瀹瑰櫒
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FGameplayTagContainer GetGameplayTagContainer() const;
 
-	// 添加标签
+	// 娣诲姞鏍囩
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void AddGameplayTag(FGameplayTag Tag);
 
-	// 移除标签
+	// 绉婚櫎鏍囩
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	void RemoveGameplayTag(FGameplayTag Tag);
 
-	// 检查是否有指定标签（精确匹配）
+	// 妫€鏌ユ槸鍚︽湁鎸囧畾鏍囩锛堢簿纭尮閰嶏級
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool HasGameplayTag(FGameplayTag Tag) const;
 
-	// 模糊匹配标签（匹配父标签）
+	// 妯＄硦鍖归厤鏍囩锛堝尮閰嶇埗鏍囩锛?
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	bool HasMatchingTag(FGameplayTag Tag) const;
 
-	// 获取所有标签名
+	// 鑾峰彇鎵€鏈夋爣绛惧悕
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	TArray<FName> GetGameplayTagNames() const;
 
-	// 获取标签显示名
+	// 鑾峰彇鏍囩鏄剧ず鍚?
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
 	FText GetTagDisplayName(FGameplayTag Tag) const;
 };

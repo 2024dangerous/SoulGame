@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameData/SoulTagsConfig.h"
 #include "GameplayTagsManager.h"
@@ -129,7 +129,7 @@ FGameplayTagContainer USoulTagsConfig::GetAllTags() const
 {
 	FGameplayTagContainer Container;
 
-	// 添加所有分类的标签
+	// 娣诲姞鎵€鏈夊垎绫荤殑鏍囩
 	TArray<const FTagCategoryConfig*> Categories = {
 		&BehaviorTags, &WeaponTags, &CombatTags,
 		&EventTags, &SkillTags, &EffectTags

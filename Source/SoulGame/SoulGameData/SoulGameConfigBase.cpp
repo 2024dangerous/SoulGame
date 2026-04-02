@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameData/SoulGameConfigBase.h"
 
@@ -41,7 +41,7 @@ bool USoulGameConfigBase::ReloadConfig(FText& OutError)
 
 bool USoulGameConfigBase::ValidateConfig_Implementation(FText& OutError)
 {
-	// 默认实现：检查ConfigId是否有效
+	// 榛樿瀹炵幇锛氭鏌onfigId鏄惁鏈夋晥
 	if (ConfigId.IsNone())
 	{
 		OutError = FText::FromString(TEXT("ConfigId cannot be None"));

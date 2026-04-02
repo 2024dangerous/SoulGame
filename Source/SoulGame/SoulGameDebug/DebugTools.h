@@ -1,25 +1,31 @@
-// DebugHelper.h
+ï»¿// DebugHelper.h
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SoulGameDebug/SoulDebugManager.h"
 
-// ×Ô¶¨ÒåÈÕÖ¾Àà±ğ£¨¿ÉÒÔÔÚ .cpp ÖĞÊµÏÖ£©
+// è‡ªå®šä¹‰æ—¥å¿—ç±»åˆ«ï¼ˆå¯ä»¥åœ¨ .cpp ä¸­å®ç°ï¼‰
 DECLARE_LOG_CATEGORY_EXTERN(ZhouXiaoPeng, Log, All);
 
+// æ—§å®ä¿æŒå…¼å®¹ï¼Œå†…éƒ¨æ¡¥æ¥åˆ°æ–°ç³»ç»Ÿ
 #define ZhouXiaoPeng_PRINT(MSG) FZhouXiaoPengDebugHelper::Print(MSG)
 #define ZhouXiaoPeng_LOG(MSG)   FZhouXiaoPengDebugHelper::Log(MSG)
 
+// æ¨èä½¿ç”¨æ–°å®
+// SOUL_LOG("æ ¼å¼åŒ–æ¶ˆæ¯ %s", *å˜é‡)
+// SOUL_WARNING("è­¦å‘Šæ¶ˆæ¯")
+// SOUL_ERROR("é”™è¯¯æ¶ˆæ¯")
+// SOUL_PRINT("å±å¹•æ¶ˆæ¯")
+// SOUL_LOG_CATEGORY(Combat, "æˆ˜æ–—æ¶ˆæ¯")
+// SOUL_SCOPED_TIMER(TimerName)
 
-// Debug ¸¨ÖúÀà
+// Debug è¾…åŠ©ç±»ï¼ˆä¿æŒæ—§æ¥å£å…¼å®¹ï¼‰
 class FZhouXiaoPengDebugHelper
 {
 public:
-    // ´òÓ¡×Ö·û´®£¨Ä¬ÈÏÊä³öµ½ÆÁÄ»ºÍÈÕÖ¾£©
+    // æ‰“å°å­—ç¬¦ä¸²ï¼ˆé»˜è®¤è¾“å‡ºåˆ°å±å¹•å’Œæ—¥å¿—ï¼‰
     static void Print(const FString& Msg, FColor Color = FColor::Cyan, float Duration = 15.0f);
 
-    // Êä³öÈÕÖ¾ĞÅÏ¢£¨½öÊä³öµ½ÈÕÖ¾£©
+    // è¾“å‡ºæ—¥å¿—ä¿¡æ¯ï¼ˆä»…è¾“å‡ºåˆ°æ—¥å¿—ï¼‰
     static void Log(const FString& Msg);
-
-
-    // ¸ü¶à×Ô¶¨Òå Debug ½Ó¿Ú¿ÉÌí¼Ó¡­¡­
 };

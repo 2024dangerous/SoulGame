@@ -2,12 +2,11 @@
 
 
 #include "SoulGameHUD/UI_FightResult.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Kismet/GameplayStatics.h"
-#include "../../../../../../../Source/Runtime/UMG/Public/Components/Button.h"
-#include "../../../../../../../Source/Runtime/UMG/Public/Components/TextBlock.h"
-#include "../../../../../../../Source/Runtime/Core/Public/Internationalization/Text.h"
-#include "../../../../../../../Source/Runtime/Experimental/ChaosCore/Public/Chaos/Vector.h"
-#include "../SoulPlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/Button.h"
+#include "Components/TextBlock.h"
+#include "Internationalization/Text.h"
+#include "SoulPlayerController.h"
 
 void UUI_FightResult::NativeConstruct()
 {
@@ -25,8 +24,8 @@ void UUI_FightResult::NativeConstruct()
         PC->bShowMouseCursor = true;
         this->SetFocus();
     }
-    // 初始化文本显示
-    CountdownText = FString::Printf(TEXT("退出游戏倒计时：%d"), Float_CountDown);
+    // 鍒濆鍖栨枃鏈樉绀?
+    CountdownText = FString::Printf(TEXT("閫€鍑烘父鎴忓€掕鏃讹細%d"), Float_CountDown);
     if (TextBlock_CountDown)
     {
         TextBlock_CountDown->SetText(FText::FromString(CountdownText));
@@ -44,7 +43,7 @@ void UUI_FightResult::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         int32 DisplayTime = FMath::CeilToInt(Float_CountDown);
         if (TextBlock_CountDown)
         {
-            CountdownText = FString::Printf(TEXT("退出游戏倒计时：%d"), DisplayTime);
+            CountdownText = FString::Printf(TEXT("閫€鍑烘父鎴忓€掕鏃讹細%d"), DisplayTime);
             TextBlock_CountDown->SetText(FText::FromString(CountdownText));
         }
     }

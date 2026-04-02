@@ -133,9 +133,8 @@ FNearbyInteractables NearbyInteractables;
 DECLARE_DELEGATE_OneParam(FOpenFightUI, bool);
 FOpenFightUI OpenFightUI;
 
-// 状态值变化多播
-DECLARE_MULTICAST_DELEGATE_FourParams(FOnStatusBoxChanged, EStatusBox, float, float, float);
-FOnStatusBoxChanged OnStatusBoxChanged;
+// 注意：状态值变化已改为通过 GAS 属性变化委托直接监听
+// UI 通过 ASC->GetGameplayAttributeValueChangeDelegate() 绑定
 ```
 
 ### Tag-Based 事件系统

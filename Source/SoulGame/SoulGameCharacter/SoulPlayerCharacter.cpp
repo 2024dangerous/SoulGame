@@ -7,17 +7,18 @@
 #include "SoulGameData/SoulActionType.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "Runtime/UMG/Public/Blueprint/UserWidget.h"
-#include "Runtime/SlateCore/Public/Styling/SlateColor.h"
-#include "../../../../../../../Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
-#include "../SoulGameDebug/DebugTools.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Components/BoxComponent.h"
-#include "../../../../../../../Source/Runtime/Core/Public/Math/MathFwd.h"
-#include "../SoulGameAI/SoulBaseEnemy.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Camera/CameraComponent.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/GameFramework/SpringArmComponent.h"
-#include "../SoulGameEvent/SoulEventManager.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Components/CapsuleComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "Styling/SlateColor.h"
+#include "NiagaraComponent.h"
+#include "SoulGameDebug/DebugTools.h"
+#include "Components/BoxComponent.h"
+#include "Math/MathFwd.h"
+#include "SoulGameAI/SoulBaseEnemy.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "SoulGameEvent/SoulEventManager.h"
+#include "Components/CapsuleComponent.h"
+#include "SoulGameCharacter/SoulPerceptionComponent.h"
 
 ASoulPlayerCharacter::ASoulPlayerCharacter()
 {
@@ -37,7 +38,7 @@ ASoulPlayerCharacter::ASoulPlayerCharacter()
 
     CurrentWeaponMaterial = Sword->GetMaterial(0);
     CurrentSwordSheathMaterial = SwordSheath->GetMaterial(0);
-    ChangeWeaponMaterial = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/_MySoulGame/Characters/_MoYing/Materials/MI_Sword_Niagara.MI_Sword_Niagara"));
+    ChangeWeaponMaterial = nullptr;
     bIsChangingWeapons = false;
     bIsWeapons = false;
 
@@ -50,8 +51,8 @@ ASoulPlayerCharacter::ASoulPlayerCharacter()
     MaxHealth = 100.f;
     MaxStamina = 100.f;
     CurrentStamina = 100.f;
-    SubStamina = 0.f;
-    AddStamina = 10.f;
+    LastStaminaCostThreshold = 0.f;
+    StaminaRestoreRate = 10.f;
 
     bIsDie = false;
     //RollingAnimSpeed = 0.5f;
@@ -68,6 +69,25 @@ void ASoulPlayerCharacter::BeginPlay()
     }
     InitAnimMontage();
     SwordAttackBox->OnComponentBeginOverlap.AddUniqueDynamic(this, &ASoulPlayerCharacter::SwordAttackEnemy);
+
+    // 加载切换武器材质（从编辑器配置的软引用加载）
+    if (ChangeWeaponMaterialAsset.IsValid())
+    {
+        ChangeWeaponMaterial = ChangeWeaponMaterialAsset.Get();
+    }
+    else if (!ChangeWeaponMaterialAsset.IsNull())
+    {
+        ChangeWeaponMaterial = ChangeWeaponMaterialAsset.LoadSynchronous();
+    }
+
+    // 初始化 GAS（GameplayAbilitySystem）
+    InitializeGAS();
+
+    // 绑定感知组件的“所有敌人离开”委托，触发取消锁定
+    if (PerceptionComponent)
+    {
+        PerceptionComponent->OnAllEnemiesLost.AddDynamic(this, &ASoulPlayerCharacter::OnAllEnemiesLost);
+    }
 }
 void ASoulPlayerCharacter::Tick(float DeltaTime)
 {
@@ -137,7 +157,7 @@ void ASoulPlayerCharacter::SwordAttackEnemy(UPrimitiveComponent* OverlappedCompo
 {
     if (ASoulBaseEnemy* Enemy = Cast<ASoulBaseEnemy>(OtherActor))
     {
-        Enemy->Injure(30);
+        Enemy->Injure(SwordDamage);
     }
 }
 
@@ -148,52 +168,52 @@ void ASoulPlayerCharacter::Look(const FInputActionValue& Value)
     if (bIsFocus)
     {
         AccumulatedMouseX += LookVector.X;
-        ZhouXiaoPeng_PRINT(FString::Printf(TEXT("AccumulatedMouseX: %f"), AccumulatedMouseX));
         if (AccumulatedMouseX >= SwitchThreshold)
         {
-            SwitchTargetEnemy(true); // 向右切换目标
-            AccumulatedMouseX = 0.0f; // 重置累计
+            SwitchTargetEnemy(true); // 随机切换目标
+            AccumulatedMouseX = 0.0f; // 重置累加值
         }
         else if (AccumulatedMouseX <= -SwitchThreshold)
         {
-            SwitchTargetEnemy(false); // 向左切换目标
-            AccumulatedMouseX = 0.0f; // 重置累计
+            SwitchTargetEnemy(false); // 随机切换目标
+            AccumulatedMouseX = 0.0f; // 重置累加值
         }
 
-        // 在锁定模式下，可能不允许自由旋转相机，你可以选择跳过下面的相机控制
+        // 如果注视目标存在，则将摄像机朝向目标
     }
 }
 
 ASoulBaseEnemy* ASoulPlayerCharacter::GetNextTargetEnemy(bool bIsRight)
 {
-    if (EnemyArray.Num() == 0 || !Controller) return nullptr;
+    if (!PerceptionComponent || !PerceptionComponent->HasEnemies() || !Controller) return nullptr;
 
-    FVector CameraForward = Controller->GetControlRotation().Vector(); // 摄像机前向
+    const TArray<ASoulBaseEnemy*>& Enemies = PerceptionComponent->GetEnemyArray();
+    FVector CameraForward = Controller->GetControlRotation().Vector(); // 链条方向
     FVector MyLocation = GetActorLocation();
 
     TArray<TPair<float, ASoulBaseEnemy*>> SortedEnemies;
 
-    for (ASoulBaseEnemy* Enemy : EnemyArray)
+    for (ASoulBaseEnemy* Enemy : Enemies)
     {
         if (!IsValid(Enemy)) continue;
 
         FVector DirToEnemy = (Enemy->GetActorLocation() - MyLocation).GetSafeNormal();
         float Angle = FMath::RadiansToDegrees(acosf(FVector::DotProduct(CameraForward, DirToEnemy)));
 
-        // 判断敌人是否在右边（叉乘看方向）
+        // 验证角度是否为正或负
         FVector Cross = FVector::CrossProduct(CameraForward, DirToEnemy);
         float SignedAngle = Cross.Z > 0 ? Angle : -Angle;
 
         SortedEnemies.Add(TPair<float, ASoulBaseEnemy*>(SignedAngle, Enemy));
     }
 
-    // 从左到右排序（角度从负到正）
+    // 按角度排序
     SortedEnemies.Sort([](const auto& A, const auto& B)
         {
             return A.Key < B.Key;
         });
 
-    // 找到当前锁定目标位置
+    // 设置当前目标索引
     int32 CurrentIndex = SortedEnemies.IndexOfByPredicate([this](const TPair<float, ASoulBaseEnemy*>& Pair)
         {
             return Pair.Value == FocusedTarget;
@@ -214,7 +234,7 @@ ASoulBaseEnemy* ASoulPlayerCharacter::GetNextTargetEnemy(bool bIsRight)
     }
     else
     {
-        // 当前未锁定，选最正前方的（夹角最小）
+        // 如果没有当前目标，则从第一个开始
         NextIndex = 0;
     }
 
@@ -227,11 +247,14 @@ void ASoulPlayerCharacter::SwitchTargetEnemy(bool bIsRight)
     ASoulBaseEnemy* NewTarget = GetNextTargetEnemy(bIsRight);
     if (NewTarget && NewTarget != FocusedTarget)
     {
-        FocusedTarget->SetEnemyTipVisibility(false);
+        if (FocusedTarget)
+        {
+            FocusedTarget->SetEnemyTipVisibility(false);
+        }
         FocusedTarget = NewTarget;
         FocusedTarget->SetEnemyTipVisibility(true);
         USoulEventManager::Get()->SwitchEnemyHealth.ExecuteIfBound(FocusedTarget->EnemyName, FocusedTarget->CurrentHealth / FocusedTarget->MaxHealth);
-        // 你可以在这里播放UI提示或特效
+        // 更新UI
     }
 }
 
@@ -241,7 +264,7 @@ void ASoulPlayerCharacter::Exit(const FInputActionValue& Value)
 }
 
 
-//FLinearColor(0.25f,0.75f,1.0f,1.f)法力值颜色
+//FLinearColor(0.25f,0.75f,1.0f,1.f)娉曞姏鍊奸鑹?
 #pragma region "Attack"
 
 //攻击逻辑
@@ -259,89 +282,14 @@ void ASoulPlayerCharacter::Attack()
 }
 void ASoulPlayerCharacter::MeleeAttack()
 {
-    //是否能攻击
-    if (!CanMeleeAttack()) return;
-
-    //播放随机动画
-    if (
-        !PlayRandomAnimMontage(MeleeAttackAnim, LastMeleeAttackIndex)) return;
-
-
-    GetWorldTimerManager().ClearTimer(ExitAttackStateTimerHandle); // 清除之前的退出攻击状态的定时器
-    GetWorldTimerManager().ClearTimer(StaminaRestoreTimer); // 清除之前的恢复体力的定时器
-    //改变状态（战斗状态）
-    PlayerBehavior = EPlayerBehavior::ATTACK;
+    if (!CanExecuteAction(MeleeAttackAnim)) return;
+    ExecuteAttack(MeleeAttackAnim, LastMeleeAttackIndex, true);
     PlayerStates = EPlayerStates::PREPARWAR;
-
-
-    // 设置体力值，并广播（CurrentStamina最低为0）
-    SetStamina(CurrentStamina, FMath::Max(CurrentStamina - MeleeAttackAnim->StaminaAnimCost, 0.f),MaxStamina);
-    //摄像头晃动
-    CameraShakeFeedBack(false);
-
-    //设置退出攻击状态的定时器
-    GetWorldTimerManager().SetTimer(ExitAttackStateTimerHandle, this, &ASoulPlayerCharacter::ExitAttackState, 10.0f, false);
-    //设置恢复体力的定时器
-    GetWorldTimerManager().SetTimer(StaminaRestoreTimer, this, &ASoulPlayerCharacter::UpdateStaminaRestore, 0.05f, true);
-
 }
 void ASoulPlayerCharacter::SwordAttack()
 {
-    //是否能攻击
-    if (!CanSwordAttack()) return;
-
-    if (!PlayRandomAnimMontage(SwordAttackAnim, LastSwordAttackIndex)) return;
-
-    //改变行为（攻击行为）
-    PlayerBehavior = EPlayerBehavior::ATTACK;
-
-    GetWorldTimerManager().ClearTimer(StaminaRestoreTimer); // 清除之前的恢复体力的定时器
-    // 设置体力值，并广播（CurrentStamina最低为0）
-    SetStamina(CurrentStamina, FMath::Max(CurrentStamina - SwordAttackAnim->StaminaAnimCost, 0.f), MaxStamina);
-    //摄像头晃动
-    CameraShakeFeedBack(false);
-    //设置恢复体力的定时器
-    GetWorldTimerManager().SetTimer(StaminaRestoreTimer, this, &ASoulPlayerCharacter::UpdateStaminaRestore, 0.05f, true);
-}
-bool ASoulPlayerCharacter::CanMeleeAttack()
-{
-    if (!MeleeAttackAnim || MeleeAttackAnim->AnimMontage.Num() == 0) return false;
-
-    //玩家为待机状态和体力值大于等于攻击消耗值，才能攻击
-    if (PlayerBehavior == EPlayerBehavior::IDLE && CurrentStamina >= MeleeAttackAnim->StaminaAnimCost)
-    {
-        return true;
-    }
-
-    //体力不足播放动画
-    if ((CurrentStamina < MeleeAttackAnim->StaminaAnimCost) && !bIsIRShow)
-    {
-        ShowIR(FText::FromString(TEXT("体力不足")), FSlateColor(FLinearColor::Yellow));
-        SubStamina = MeleeAttackAnim->StaminaAnimCost;
-    }
-    return false;
-}
-bool ASoulPlayerCharacter::CanSwordAttack()
-{
-    //是否有动作
-    if (!SwordAttackAnim || SwordAttackAnim->AnimMontage.Num() == 0) return false;
-
-    //是否在武器状态
-    if (!bIsWeapons) return false;
-
-    //玩家为待机状态和体力值大于等于攻击消耗值，才能攻击
-    if (PlayerBehavior == EPlayerBehavior::IDLE && CurrentStamina >= SwordAttackAnim->StaminaAnimCost)
-    {
-        return true;
-    }
-
-    //体力不足播放动画
-    if ((CurrentStamina < SwordAttackAnim->StaminaAnimCost) && !bIsIRShow)
-    {
-        ShowIR(FText::FromString(TEXT("体力不足")), FSlateColor(FLinearColor::Yellow));
-        SubStamina = SwordAttackAnim->StaminaAnimCost;
-    }
-    return false;
+    if (!CanExecuteAction(SwordAttackAnim, true)) return;
+    ExecuteAttack(SwordAttackAnim, LastSwordAttackIndex);
 }
 //是否能攻击
 
@@ -367,83 +315,13 @@ void ASoulPlayerCharacter::Rolling()
 }
 void ASoulPlayerCharacter::MeleeRolling()
 {
-    if (!CanMeleeRolling()) return;
-    if (!PlayRollingAnimMontage(MeleeRollingAnim)) return;
-
-    //切换状态（翻滚状态）
-    PlayerBehavior = EPlayerBehavior::ROLLING;
-
-    //开始恢复体力
-    GetWorldTimerManager().ClearTimer(StaminaRestoreTimer); // 清除之前的
-
-    // 设置体力值，并广播（CurrentStamina最低为0）
-    SetStamina(CurrentStamina, FMath::Max(CurrentStamina - MeleeRollingAnim->StaminaAnimCost, 0.f), MaxStamina);
-
-    //摄像头晃动
-    CameraShakeFeedBack(false);
-
-    //设置恢复体力的定时器
-    GetWorldTimerManager().SetTimer(StaminaRestoreTimer, this, &ASoulPlayerCharacter::UpdateStaminaRestore, 0.05f, true);
-
+    if (!CanExecuteAction(MeleeRollingAnim)) return;
+    ExecuteRolling(MeleeRollingAnim);
 }
 void ASoulPlayerCharacter::SwordRolling()
 {
-    if (!CanSwordRolling()) return;
-    if (!PlayRollingAnimMontage(SwordRollingAnim)) return;
-
-    //切换状态（翻滚状态）
-    PlayerBehavior = EPlayerBehavior::ROLLING;
-
-    //开始恢复体力
-    GetWorldTimerManager().ClearTimer(StaminaRestoreTimer); // 清除之前的
-
-    // 设置体力值，并广播（CurrentStamina最低为0）
-    SetStamina(CurrentStamina, FMath::Max(CurrentStamina - SwordRollingAnim->StaminaAnimCost, 0.f), MaxStamina);
-
-    //摄像头晃动
-    CameraShakeFeedBack(false);
-
-    //设置恢复体力的定时器
-    GetWorldTimerManager().SetTimer(StaminaRestoreTimer, this, &ASoulPlayerCharacter::UpdateStaminaRestore, 0.05f, true);
-}
-//是否能翻滚
-bool ASoulPlayerCharacter::CanMeleeRolling()
-{
-    if (!MeleeRollingAnim || MeleeRollingAnim->AnimMontage.Num() == 0) return false;
-
-    //玩家为待机状态和体力值大于等于攻击消耗值，才能翻滚
-    if (PlayerBehavior == EPlayerBehavior::IDLE && CurrentStamina >= MeleeRollingAnim->StaminaAnimCost)
-    {
-        return true;
-    }
-
-    //体力不足播放动画
-    if ((CurrentStamina < MeleeRollingAnim->StaminaAnimCost) && !bIsIRShow)
-    {
-        ShowIR(FText::FromString(TEXT("体力不足")), FSlateColor(FLinearColor::Yellow));
-        SubStamina = MeleeRollingAnim->StaminaAnimCost;
-    }
-
-    return false;
-}
-bool ASoulPlayerCharacter::CanSwordRolling()
-{
-    if (!SwordRollingAnim || SwordRollingAnim->AnimMontage.Num() == 0) return false;
-
-    //玩家为待机状态和体力值大于等于攻击消耗值，才能翻滚
-    if (PlayerBehavior == EPlayerBehavior::IDLE && CurrentStamina >= SwordRollingAnim->StaminaAnimCost && WeaponType == EWeaponType::SWORD)
-    {
-        return true;
-    }
-
-    //体力不足播放动画
-    if ((CurrentStamina < SwordRollingAnim->StaminaAnimCost) && !bIsIRShow)
-    {
-        ShowIR(FText::FromString(TEXT("体力不足")), FSlateColor(FLinearColor::Yellow));
-        SubStamina = SwordRollingAnim->StaminaAnimCost;
-    }
-
-    return false;
+    if (!CanExecuteAction(SwordRollingAnim, false, true)) return;
+    ExecuteRolling(SwordRollingAnim);
 }
 
 #pragma endregion "Rolling"
@@ -452,7 +330,7 @@ void ASoulPlayerCharacter::Defense(const FInputActionValue& Value)
 {
     if (Value.Get<bool>() && CanDefense())
     {
-        PlayerBehavior = EPlayerBehavior::DENFENSE;
+    PlayerBehavior = EPlayerBehavior::DEFENSE;
         bIsDefense = true;
     }
     else if (!Value.Get<bool>())
@@ -484,7 +362,7 @@ void ASoulPlayerCharacter::Weapons()
 
     bIsChangingWeapons = true;
     //一秒后切换状态
-    GetWorldTimerManager().SetTimer(QieHuanWeapons, this, &ASoulPlayerCharacter::ChangeSwordWeaponType, 1.f, false);
+    GetWorldTimerManager().SetTimer(WeaponSwitchTimer, this, &ASoulPlayerCharacter::ChangeSwordWeaponType, 1.f, false);
 }
 
 //切换武器插槽（动画通知切换）
@@ -546,7 +424,7 @@ void ASoulPlayerCharacter::Focus()
 {
     if (!bIsFocus)
     {
-        FocusedTarget = GetNearestEnemy();
+        FocusedTarget = PerceptionComponent ? PerceptionComponent->GetNearestEnemy() : nullptr;
         if (FocusedTarget)
         {
             FocusedTarget->SetEnemyTipVisibility(true);
@@ -587,13 +465,22 @@ void ASoulPlayerCharacter::SetStartFocus()
     FRotator TargetRotation = Direction.Rotation();
 
     // 平滑角色转向
-    FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, 0.001f, 5.0f);
+    float DeltaTime = GetWorld()->GetDeltaSeconds();
+    FRotator NewRotation = FMath::RInterpTo(GetActorRotation(), TargetRotation, DeltaTime, 5.0f);
     SetActorRotation(NewRotation);
     CameraBoom->bUsePawnControlRotation = false;
-    //FollowCamera->bUsePawnControlRotation = false;
     // 平滑摄像机控制器转向
-    FRotator NewControlRotation = FMath::RInterpTo(Controller->GetControlRotation(), TargetRotation, 0.001f, 5.0f);
+    FRotator NewControlRotation = FMath::RInterpTo(Controller->GetControlRotation(), TargetRotation, DeltaTime, 5.0f);
     Controller->SetControlRotation(NewControlRotation);
+}
+
+void ASoulPlayerCharacter::OnAllEnemiesLost()
+{
+    // 所有敌人离开感知范围时，取消锁定（仅在锁定状态下才执行）
+    if (bIsFocus)
+    {
+        Focus();
+    }
 }
 
 #pragma endregion "Focus"
@@ -629,7 +516,7 @@ void ASoulPlayerCharacter::SwordInjury(FVector HitLocation, float Health_Sub)
 {
     if (!CanInjury()) return;
 
-    if (PlayerBehavior == EPlayerBehavior::DENFENSE)
+    if (PlayerBehavior == EPlayerBehavior::DEFENSE)
     {
         int DefenseIndex = -1;
         PlayRandomAnimMontage(SwordDefenseInjuryAnim, DefenseIndex);
@@ -650,11 +537,13 @@ void ASoulPlayerCharacter::HealthChange(float Health_Sub)
     {
         Die();
     }
-    SetHealth(InCurrentHealth, CurrentHealth, MaxHealth);
+    SetHealth(CurrentHealth);
 }
 
 bool ASoulPlayerCharacter::CanInjury()
 {
+    if (bIsDie) return false;
+    if (PlayerBehavior == EPlayerBehavior::ROLLING) return false;
     return true;
 }
 
@@ -669,13 +558,13 @@ void ASoulPlayerCharacter::UpdateStaminaRestore()
 
     if (CurrentStamina < MaxStamina && PlayerBehavior == EPlayerBehavior::IDLE)
     {
-        NewStamina = FMath::Min(CurrentStamina + AddStamina * 0.05f, 100.f);
+        float RestoredStamina = FMath::Min(CurrentStamina + StaminaRestoreRate * 0.05f, MaxStamina);
         //关闭资源不足显示
-        if (NewStamina >= SubStamina && bIsIRShow)
+        if (RestoredStamina >= LastStaminaCostThreshold && bIsIRShow)
         {
             CloseIR();
         }
-        SetStamina(CurrentStamina, NewStamina, MaxStamina);
+        SetStamina(RestoredStamina);
     }
 }
 
@@ -745,25 +634,8 @@ bool ASoulPlayerCharacter::PlayInjuryAnimMontage(FSoulActionType* CurrentAnimMon
 
 ASoulBaseEnemy* ASoulPlayerCharacter::GetNearestEnemy()
 {
-    ASoulBaseEnemy* NearestEnemy = nullptr;
-    float MinDistanceSqr = TNumericLimits<float>::Max();
-
-    FVector MyLocation = GetActorLocation();
-
-    for (ASoulBaseEnemy* Enemy : EnemyArray)
-    {
-        if (!IsValid(Enemy)) continue;
-
-        float DistSqr = FVector::DistSquared(Enemy->GetActorLocation(), MyLocation);
-        if (DistSqr < MinDistanceSqr)
-        {
-            MinDistanceSqr = DistSqr;
-            NearestEnemy = Enemy;
-        }
-    }
-
-    return NearestEnemy;
-
+    // 委托给感知组件
+    return PerceptionComponent ? PerceptionComponent->GetNearestEnemy() : nullptr;
 }
 
 int32 ASoulPlayerCharacter::GetHitLocationAnimIndex(FVector HitLocation)
@@ -817,18 +689,82 @@ void ASoulPlayerCharacter::RemovePlayerInput()
     }
 }
 
-void ASoulPlayerCharacter::fhnaof()
-{
-    Super::fhnaof();
+#pragma region "Combat"
+// ============ 通用战斗方法（消除重复代码） ============
 
-    Injury(GetActorLocation() + FVector(0, 100, 0),10);
-    
+void ASoulPlayerCharacter::ExecuteAttack(FSoulActionType* ActionAnim, int32& LastIndex, bool bClearExitTimer)
+{
+    //播放随机动画
+    if (!PlayRandomAnimMontage(ActionAnim, LastIndex)) return;
+
+    if (bClearExitTimer)
+    {
+        GetWorldTimerManager().ClearTimer(ExitAttackStateTimerHandle);
+    }
+    GetWorldTimerManager().ClearTimer(StaminaRestoreTimer);
+
+    //改变行为（攻击行为）
+    PlayerBehavior = EPlayerBehavior::ATTACK;
+
+    // 设置体力值，并广播（CurrentStamina最低为0）
+    SetStamina(FMath::Max(CurrentStamina - ActionAnim->StaminaAnimCost, 0.f));
+    //摄像头晃动
+    CameraShakeFeedBack(false);
+
+    if (bClearExitTimer)
+    {
+        //设置退出攻击状态的定时器
+        GetWorldTimerManager().SetTimer(ExitAttackStateTimerHandle, this, &ASoulPlayerCharacter::ExitAttackState, 10.0f, false);
+    }
+    //设置恢复体力的定时器
+    GetWorldTimerManager().SetTimer(StaminaRestoreTimer, this, &ASoulPlayerCharacter::UpdateStaminaRestore, 0.05f, true);
 }
 
-void ASoulPlayerCharacter::danhfafa()
+void ASoulPlayerCharacter::ExecuteRolling(FSoulActionType* RollingAnim)
 {
-    USoulEventManager::Get()->OpenSetMenu.ExecuteIfBound(true);
-   
+    if (!PlayRollingAnimMontage(RollingAnim)) return;
+
+    //切换状态（翻滚状态）
+    PlayerBehavior = EPlayerBehavior::ROLLING;
+
+    //开始恢复体力
+    GetWorldTimerManager().ClearTimer(StaminaRestoreTimer);
+
+    // 设置体力值，并广播（CurrentStamina最低为0）
+    SetStamina(FMath::Max(CurrentStamina - RollingAnim->StaminaAnimCost, 0.f));
+
+    //摄像头晃动
+    CameraShakeFeedBack(false);
+
+    //设置恢复体力的定时器
+    GetWorldTimerManager().SetTimer(StaminaRestoreTimer, this, &ASoulPlayerCharacter::UpdateStaminaRestore, 0.05f, true);
 }
+
+bool ASoulPlayerCharacter::CanExecuteAction(FSoulActionType* ActionAnim, bool bRequireWeapon, bool bRequireSwordType)
+{
+    //检查动画数据是否有效
+    if (!ActionAnim || ActionAnim->AnimMontage.Num() == 0) return false;
+
+    //是否需要武器状态
+    if (bRequireWeapon && !bIsWeapons) return false;
+
+    //是否需要剑类型
+    if (bRequireSwordType && WeaponType != EWeaponType::SWORD) return false;
+
+    //玩家为待机状态且体力值足够，才能执行动作
+    if (PlayerBehavior == EPlayerBehavior::IDLE && CurrentStamina >= ActionAnim->StaminaAnimCost)
+    {
+        return true;
+    }
+
+    //体力不足提示
+    if ((CurrentStamina < ActionAnim->StaminaAnimCost) && !bIsIRShow)
+    {
+        ShowIR(FText::FromString(TEXT("体力不足")), FSlateColor(FLinearColor::Yellow));
+        LastStaminaCostThreshold = ActionAnim->StaminaAnimCost;
+    }
+    return false;
+}
+#pragma endregion "Combat"
 
 #pragma endregion "Function"

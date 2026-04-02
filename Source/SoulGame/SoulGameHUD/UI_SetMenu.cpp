@@ -1,10 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SoulGameHUD/UI_SetMenu.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Kismet/GameplayStatics.h"
-#include "../../../../../../../Source/Runtime/UMG/Public/Components/Button.h"
-#include "../SoulPlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/Button.h"
+#include "SoulPlayerController.h"
 
 void UUI_SetMenu::NativeConstruct()
 {
@@ -24,7 +24,7 @@ void UUI_SetMenu::NativeDestruct()
     Super::NativeDestruct();
 }
 
-//°´ÏÂEsc¼üºó»Ö¸´
+// ç›‘å¬EscæŒ‰é”®æŒ‡ä»¤
 FReply UUI_SetMenu::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
     if (InKeyEvent.GetKey() == EKeys::Escape)
@@ -34,7 +34,7 @@ FReply UUI_SetMenu::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent
         if (PC)
         {
             PC->SetInputMode(FInputModeGameOnly());
-            PC->bShowMouseCursor = false; // ÏÔÊ¾Êó±ê
+            PC->bShowMouseCursor = false; // éšè—é¼ æ ‡
             UGameplayStatics::SetGamePaused(GetWorld(), false);
         }
         return FReply::Handled();

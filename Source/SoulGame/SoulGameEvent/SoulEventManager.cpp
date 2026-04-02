@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameEvent/SoulEventManager.h"
 #include "SoulGameTags/SoulGameTagsManager.h"
@@ -29,9 +29,9 @@ void USoulEventManager::Initialize()
 		return;
 	}
 
+	// 清理旧实例
 	if (Instance && Instance != this)
 	{
-		// 清理旧实例
 		Instance->Deinitialize();
 	}
 

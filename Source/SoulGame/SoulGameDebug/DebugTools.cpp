@@ -1,8 +1,8 @@
-
+ï»¿
 #include "DebugTools.h"
 #include "Engine/Engine.h"
 
-// ¶¨ÒåÈÕÖ¾Àà±ð
+// å®šä¹‰æ—¥å¿—ç±»åˆ«
 DEFINE_LOG_CATEGORY(ZhouXiaoPeng);
 
 void FZhouXiaoPengDebugHelper::Print(const FString& Msg, FColor Color, float Duration)

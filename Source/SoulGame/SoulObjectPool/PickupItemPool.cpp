@@ -1,4 +1,4 @@
-#include "PickupItemPool.h"
+ï»¿#include "PickupItemPool.h"
 #include "SoulGameItem/PickupItem.h"
 #include "Engine/World.h"
 
@@ -41,7 +41,7 @@ UObject* UPickupItemPool::AcquireObject(UWorld* World)
         }
     }
 
-    // Ã»ÓĞ¿ÉÓÃ¶ÔÏó£¬³¢ÊÔ´´½¨
+    // æ²¡æœ‰å¯ç”¨å¯¹è±¡ï¼Œå°è¯•åˆ›å»º
     if (ItemClass && World)
     {
         FActorSpawnParameters SpawnParams;
@@ -66,7 +66,7 @@ void UPickupItemPool::ReleaseObject(UObject* Object)
         Item->SetActorHiddenInGame(true);
         Item->SetActorTickEnabled(false);
 
-        // ¿ÉÑ¡£ºÖØÖÃÎ»ÖÃ
+        // å¯é€‰ï¼šé‡ç½®ä½ç½®
         Item->SetActorLocation(FVector::ZeroVector);
 
         PooledItems.Add(Item);
@@ -77,7 +77,7 @@ void UPickupItemPool::SetupPool(TSubclassOf<AActor> ActorClass, UWorld* InWorld)
 {
     if (ActorClass->IsChildOf(APickupItem::StaticClass()))
     {
-        ItemClass = ActorClass; // ÒşÊ½×ª»»°²È«
+        ItemClass = ActorClass; // éšå¼è½¬æ¢å®‰å…¨
         WorldContext = InWorld;
     }
     else

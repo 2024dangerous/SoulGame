@@ -32,11 +32,11 @@ enum class EPlayerBehavior :uint8
     IDLE,      //待机
     ATTACK,    //攻击
     ROLLING,   //翻滚
-    DENFENSE,  //防御
+    DEFENSE,   //防御
     INJURY     //受伤
 };
 
-//敌人行为
+//敌人武器类型（已废弃，请使用 EWeaponType 代替）
 UENUM(BlueprintType)
 enum class EEnemyWeaponType :uint8
 {
@@ -54,17 +54,6 @@ enum class EEnemyBehavior :uint8
     MELEEATTACK, //拳攻击
     SWORDATTACK, //剑攻击
     ROLLING,     //翻滚
-    DENFENSE,    //防御
+    DEFENSE,     //防御
     INJURY       //受伤
-};
-
-
-//状态条
-UENUM(BlueprintType)
-enum class EStatusBox :uint8
-{
-    NONE,
-    Health,      //生命值
-    Mana,        //法力值
-    Stamina      //体力值
 };

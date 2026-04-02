@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SoulGameHUD/UI_FightMainUI.h"
@@ -8,9 +8,11 @@
 #include "SoulGame/SoulPlayerController.h"
 #include "SoulGameCharacter/SoulPlayerCharacter.h"
 #include "UI_EnemyHealth.h"
-#include "../SoulGameEvent/SoulEventManager.h"
+#include "SoulGameEvent/SoulEventManager.h"
 #include "UI_FightResult.h"
 #include "UObject/ConstructorHelpers.h"
+#include "AbilitySystemComponent.h"
+#include "SoulGameGAS/SoulAttributeSet.h"
 
 UUI_FightMainUI::UUI_FightMainUI()
 {
@@ -26,7 +28,6 @@ void UUI_FightMainUI::NativeConstruct()
     USoulEventManager* EventMgr = USoulEventManager::Get();
     if (EventMgr && EventMgr->IsInitialized())
     {
-        EventMgr->OnStatusBoxChanged.AddUObject(this, &UUI_FightMainUI::HandleStatusValueChanged);
         EventMgr->OpenEnemyHealth.BindUObject(this, &UUI_FightMainUI::SetUI_EnemyHealth);
         EventMgr->OpenFightResult.BindUObject(this, &UUI_FightMainUI::OpenUI_FightResult);
         EventMgr->SwitchEnemyHealth.BindUObject(this, &UUI_FightMainUI::SwitchUI_EnemyHealth);
@@ -41,6 +42,14 @@ void UUI_FightMainUI::NativeConstruct()
             WBP_Health->InitValue(SoulPlayerCharacter->CurrentHealth, SoulPlayerCharacter->MaxHealth);
             WBP_Mana->InitValue(SoulPlayerCharacter->CurrentMana, SoulPlayerCharacter->MaxMana);
             WBP_Stamine->InitValue(SoulPlayerCharacter->CurrentStamina, SoulPlayerCharacter->MaxStamina);
+
+            // 缓存旧值
+            CachedOldHealth = SoulPlayerCharacter->CurrentHealth;
+            CachedOldMana = SoulPlayerCharacter->CurrentMana;
+            CachedOldStamina = SoulPlayerCharacter->CurrentStamina;
+
+            // 绑定 GAS 属性变化委托
+            BindGASAttributeDelegates();
         }
     }
 }
@@ -49,14 +58,11 @@ void UUI_FightMainUI::NativeDestruct()
 {
     Super::NativeDestruct();
 
-    USoulEventManager* EventMgr = USoulEventManager::Get();
-    if (EventMgr && EventMgr->IsInitialized())
-    {
-        EventMgr->OnStatusBoxChanged.RemoveAll(this);
-    }
+    // 解绑 GAS 属性变化委托
+    UnbindGASAttributeDelegates();
 }
 
-//播放资源不足动画（设置资源名称）
+//鎾斁璧勬簮涓嶈冻鍔ㄧ敾锛堣缃祫婧愬悕绉帮級
 void UUI_FightMainUI::PlayShowIRAnimation(FText ShowText)
 {
     TextBlock_ShowInsufficientResource->SetText(ShowText);
@@ -115,19 +121,52 @@ void UUI_FightMainUI::OpenUI_FightResult()
 }
 
 
-//体力变化事件
-void UUI_FightMainUI::HandleStatusValueChanged(EStatusBox StatusBox, float CurrentValue, float NewValue,float MaxValue)
+//体力变化事件 - 通过 GAS 属性变化委托直接监听
+void UUI_FightMainUI::HandleHealthChanged(const FOnAttributeChangeData& Data)
 {
-    switch (StatusBox)
-    {
-    case EStatusBox::Health:
-        WBP_Health->ValueChanged(CurrentValue, NewValue, MaxValue);
-        break;
-    case EStatusBox::Mana:
-        WBP_Mana->ValueChanged(CurrentValue, NewValue, MaxValue);
-        break;
-    case EStatusBox::Stamina:
-        WBP_Stamine->ValueChanged(CurrentValue, NewValue, MaxValue);
-        break;
-    }
+    float MaxValue = SoulPlayerCharacter ? SoulPlayerCharacter->MaxHealth : 100.f;
+    WBP_Health->ValueChanged(CachedOldHealth, Data.NewValue, MaxValue);
+    CachedOldHealth = Data.NewValue;
+}
+
+void UUI_FightMainUI::HandleManaChanged(const FOnAttributeChangeData& Data)
+{
+    float MaxValue = SoulPlayerCharacter ? SoulPlayerCharacter->MaxMana : 100.f;
+    WBP_Mana->ValueChanged(CachedOldMana, Data.NewValue, MaxValue);
+    CachedOldMana = Data.NewValue;
+}
+
+void UUI_FightMainUI::HandleStaminaChanged(const FOnAttributeChangeData& Data)
+{
+    float MaxValue = SoulPlayerCharacter ? SoulPlayerCharacter->MaxStamina : 100.f;
+    WBP_Stamine->ValueChanged(CachedOldStamina, Data.NewValue, MaxValue);
+    CachedOldStamina = Data.NewValue;
+}
+
+void UUI_FightMainUI::BindGASAttributeDelegates()
+{
+    if (!SoulPlayerCharacter) return;
+
+    CachedASC = SoulPlayerCharacter->GetAbilitySystemComponent();
+    if (!CachedASC) return;
+
+    CachedASC->GetGameplayAttributeValueChangeDelegate(USoulAttributeSet::GetHealthAttribute())
+        .AddUObject(this, &UUI_FightMainUI::HandleHealthChanged);
+    CachedASC->GetGameplayAttributeValueChangeDelegate(USoulAttributeSet::GetManaAttribute())
+        .AddUObject(this, &UUI_FightMainUI::HandleManaChanged);
+    CachedASC->GetGameplayAttributeValueChangeDelegate(USoulAttributeSet::GetStaminaAttribute())
+        .AddUObject(this, &UUI_FightMainUI::HandleStaminaChanged);
+}
+
+void UUI_FightMainUI::UnbindGASAttributeDelegates()
+{
+    if (!CachedASC) return;
+
+    CachedASC->GetGameplayAttributeValueChangeDelegate(USoulAttributeSet::GetHealthAttribute())
+        .RemoveAll(this);
+    CachedASC->GetGameplayAttributeValueChangeDelegate(USoulAttributeSet::GetManaAttribute())
+        .RemoveAll(this);
+    CachedASC->GetGameplayAttributeValueChangeDelegate(USoulAttributeSet::GetStaminaAttribute())
+        .RemoveAll(this);
+    CachedASC = nullptr;
 }

@@ -1,11 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SoulGameItem/PickupItem.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Components/SphereComponent.h"
-#include "../../../../../../../Plugins/FX/Niagara/Source/Niagara/Public/NiagaraComponent.h"
-#include "../SoulGameCharacter/SoulPlayerCharacter.h"
-#include "../SoulGameEvent/SoulEventManager.h"
+#include "Components/SphereComponent.h"
+#include "NiagaraComponent.h"
+#include "SoulGameCharacter/SoulPlayerCharacter.h"
+#include "SoulGameEvent/SoulEventManager.h"
 #include "SoulGameItemType/SoulGameItemType.h"
 
 void APickupItem::OnPooledObjectSpawn()

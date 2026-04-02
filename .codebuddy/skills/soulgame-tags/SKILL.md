@@ -1,3 +1,12 @@
+---
+name: soulgame-tags
+description: |
+  This skill provides detailed documentation for the SoulGame GameplayTags system, including tag interface, tag manager singleton, tag categories, and integration with the event system.
+  Use this skill when working with GameplayTags, state management, tag-based events, or skill/effect tagging.
+when: |
+  When user wants to understand GameplayTags implementation, tag categories (behavior/weapon/combat/event/skill/effect), tag matching, or tag-event integration.
+---
+
 # SoulGame Tags System
 
 SoulGame GameplayTags 系统，用于状态管理、事件标记和技能判断。

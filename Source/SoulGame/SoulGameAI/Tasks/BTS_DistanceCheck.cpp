@@ -1,71 +1,71 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameAI/Tasks/BTS_DistanceCheck.h"
-#include "../SoulAIController.h"
-#include "../SoulBaseEnemy.h"
-#include "../../SoulGameCharacter/SoulBaseCharacter.h"
-#include "SoulGameAI/ShadowSpecter.h"
-#include "../../../../../../../Source/Runtime/AIModule/Classes/BehaviorTree/BlackboardComponent.h"
-
-enum class ERangeType
-{
-    Close,
-    Medium,
-    Far
-};
-
-
-ERangeType GetRangeType(float Distance)
-{
-    if (Distance <= 180.f) return ERangeType::Close;
-    if (Distance > 180.f  && Distance < 500.f) return ERangeType::Medium;
-    return ERangeType::Far;
-}
-
-
+#include "SoulGameAI/SoulAIController.h"
+#include "SoulGameAI/SoulBaseEnemy.h"
+#include "SoulGameAI/Config/SoulAIConfig.h"
+#include "SoulGameCharacter/SoulBaseCharacter.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 void UBTS_DistanceCheck::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
     Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
-    if (ASoulAIController* AIController = Cast<ASoulAIController>(OwnerComp.GetAIOwner()))
-    {
-        if (AShadowSpecter* AICharacter = Cast<AShadowSpecter>(AIController->GetPawn()))
-        {
-            if (ASoulBaseCharacter* Player = Cast<ASoulBaseCharacter>(AICharacter->AttackTarget))
-            {
-                float Distance = AICharacter->GetDistanceTo(Player);
-                FVector CurrentLocation = AICharacter->GetActorLocation();
-                float DistanceToInit = FVector::Dist(CurrentLocation, AICharacter->InitLocation);
-                if (DistanceToInit < 100.f)
-                {
 
-                    AIController->GetBlackboardComponent()->SetValueAsBool("IsReSet", false);
-                }
-                if (DistanceToInit > 4000.f)
-                {
-                    AIController->GetBlackboardComponent()->SetValueAsBool("IsReSet", true);
-                }
-                else
-                {
-                    switch(GetRangeType(Distance))
-                    {
-                    case ERangeType::Close:
-                        AIController->GetBlackboardComponent()->SetValueAsBool("IsAttack", true);
-                        AIController->GetBlackboardComponent()->SetValueAsBool("IsRunning", false);
-                        break;
-                    case ERangeType::Medium:
-                        AICharacter->RunningMovement(false);
-                        AIController->GetBlackboardComponent()->SetValueAsBool("IsAttack", false);
-                        AIController->GetBlackboardComponent()->SetValueAsBool("IsRunning", false);
-                        break;
-                    case ERangeType::Far:
-                        AIController->GetBlackboardComponent()->SetValueAsBool("IsRunning", true);
-                        AIController->GetBlackboardComponent()->SetValueAsBool("IsAttack", false);
-                        break;
-                    }
-                }
-            }
+    ASoulAIController* AIController = Cast<ASoulAIController>(OwnerComp.GetAIOwner());
+    if (!AIController) return;
+
+    ASoulBaseEnemy* AICharacter = Cast<ASoulBaseEnemy>(AIController->GetPawn());
+    if (!AICharacter) return;
+
+    UBlackboardComponent* BlackboardComp = AIController->GetBlackboardComponent();
+    if (!BlackboardComp) return;
+
+    // 获取攻击目标
+    AActor* TargetActor = Cast<AActor>(BlackboardComp->GetValueAsObject("AttackTarget"));
+    if (!TargetActor) return;
+
+    float Distance = AICharacter->GetDistanceTo(TargetActor);
+
+    // 获取配置（数据驱动）
+    USoulAIConfig* Config = AIController->GetAIConfig();
+
+    // 计算距离阈值
+    float MaxChaseDistance = Config ? Config->RangeConfig.MaxChaseDistance : 4000.0f;
+    float ResetDistance = Config ? Config->RangeConfig.ResetDistance : 100.0f;
+
+    // 检查是否需要返回初始位置
+    FVector InitLocation = BlackboardComp->GetValueAsVector("InitLocation");
+    float DistanceToInit = FVector::Dist(AICharacter->GetActorLocation(), InitLocation);
+
+    if (DistanceToInit < ResetDistance)
+    {
+        BlackboardComp->SetValueAsBool("IsReSet", false);
+    }
+
+    if (DistanceToInit > MaxChaseDistance)
+    {
+        BlackboardComp->SetValueAsBool("IsReSet", true);
+    }
+    else
+    {
+        // 使用数据驱动的距离类型判断
+        int32 RangeType = AIController->GetRangeTypeFromConfig(Distance);
+
+        switch (RangeType)
+        {
+        case 0: // 近距离 - 攻击
+            BlackboardComp->SetValueAsBool("IsAttack", true);
+            BlackboardComp->SetValueAsBool("IsRunning", false);
+            break;
+        case 1: // 中距离 - 行走
+            AICharacter->RunningMovement(false);
+            BlackboardComp->SetValueAsBool("IsAttack", false);
+            BlackboardComp->SetValueAsBool("IsRunning", false);
+            break;
+        case 2: // 远距离 - 奔跑追击
+            BlackboardComp->SetValueAsBool("IsRunning", true);
+            BlackboardComp->SetValueAsBool("IsAttack", false);
+            break;
         }
     }
 }

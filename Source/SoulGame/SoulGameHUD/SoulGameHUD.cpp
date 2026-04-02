@@ -3,11 +3,11 @@
 
 #include "SoulGameHUD/SoulGameHUD.h"
 #include "UI_FightMainUI.h"
-#include "../SoulGameEvent/SoulEventManager.h"
+#include "SoulGameEvent/SoulEventManager.h"
 #include "UI_Interaction.h"
 #include "UI_SetMenu.h"
-#include "../../../../../../../Source/Runtime/Engine/Classes/Kismet/GameplayStatics.h"
-#include "../SoulGameDebug/DebugTools.h"
+#include "Kismet/GameplayStatics.h"
+#include "SoulGameDebug/DebugTools.h"
 #include "UI_FightResult.h"
 
 ASoulGameHUD::ASoulGameHUD()
@@ -70,7 +70,7 @@ void ASoulGameHUD::OpenSetMenu(bool bIsOpen)
         {
             //UI_SetMenu->bIsFocusable = true;
             //FInputModeUIOnly InputMode;
-            //InputMode.SetWidgetToFocus(UI_SetMenu->TakeWidget());  // 关键！！！
+            //InputMode.SetWidgetToFocus(UI_SetMenu->TakeWidget());  // 鍏抽敭锛侊紒锛?
             //InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
 
             //PC->SetInputMode(InputMode);

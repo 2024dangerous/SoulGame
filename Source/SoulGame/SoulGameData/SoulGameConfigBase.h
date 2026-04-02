@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -9,8 +9,8 @@
 /**
  * SoulGameConfigBase - 配置 DataAsset 基类
  * 
- * 所有游戏配置 DataAsset 都应继承此类
- * 提供配置加载、重载、验证等通用功能
+ * 鎵€鏈夋父鎴忛厤缃?DataAsset 都应继承此类
+ * 鎻愪緵閰嶇疆鍔犺浇銆侀噸杞姐€侀獙璇佺瓑閫氱敤鍔熻兘
  */
 UCLASS(Abstract, Blueprintable, BlueprintType)
 class SOULGAME_API USoulGameConfigBase : public UPrimaryDataAsset
@@ -22,7 +22,7 @@ public:
 
 	// ============ 配置标识 ============
 	
-	// 配置唯一标识
+	// 閰嶇疆鍞竴鏍囪瘑
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Config")
 	FName ConfigId;
 
@@ -38,50 +38,50 @@ public:
 
 	/**
 	 * 加载配置
-	 * @param OutError 错误信息
-	 * @return 是否加载成功
+	 * @param OutError 閿欒淇℃伅
+	 * @return 鏄惁鍔犺浇鎴愬姛
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Config")
 	virtual bool LoadConfig(FText& OutError);
 
 	/**
-	 * 重载配置（支持热更新）
-	 * @param OutError 错误信息
-	 * @return 是否重载成功
+	 * 閲嶈浇閰嶇疆锛堟敮鎸佺儹鏇存柊锛?
+	 * @param OutError 閿欒淇℃伅
+	 * @return 鏄惁閲嶈浇鎴愬姛
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Config")
 	virtual bool ReloadConfig(FText& OutError);
 
 	/**
 	 * 验证配置
-	 * @param OutError 错误信息
-	 * @return 是否验证通过
+	 * @param OutError 閿欒淇℃伅
+	 * @return 鏄惁楠岃瘉閫氳繃
 	 */
 	UFUNCTION(BlueprintNativeEvent, Category = "SoulGame|Config")
 	bool ValidateConfig(FText& OutError);
 
 	/**
-	 * 获取配置是否有效
+	 * 鑾峰彇閰嶇疆鏄惁鏈夋晥
 	 */
 	UFUNCTION(BlueprintPure, Category = "SoulGame|Config")
 	bool IsConfigValid() const { return bIsLoaded && !bHasError; }
 
 	/**
-	 * 获取配置是否已加载
+	 * 鑾峰彇閰嶇疆鏄惁宸插姞杞?
 	 */
 	UFUNCTION(BlueprintPure, Category = "SoulGame|Config")
 	bool IsLoaded() const { return bIsLoaded; }
 
 protected:
-	// 配置是否已加载
+	// 閰嶇疆鏄惁宸插姞杞?
 	UPROPERTY()
 	bool bIsLoaded;
 
-	// 配置是否有错误
+	// 閰嶇疆鏄惁鏈夐敊璇?
 	UPROPERTY()
 	bool bHasError;
 
-	// 最后错误信息
+	// 鏈€鍚庨敊璇俊鎭?
 	UPROPERTY()
 	FText LastError;
 };

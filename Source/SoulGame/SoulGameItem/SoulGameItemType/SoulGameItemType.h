@@ -1,20 +1,20 @@
-
+ï»¿
 #pragma once
 
 #include "CoreMinimal.h"
 #include "SoulGameItemType.generated.h"
 
-//ÎïÆ·ÖÖÀà
+//ç‰©å“ç§ç±»
 UENUM(BlueprintType)
 enum class ESoulGameItemType :uint8
 {
-    None,      //ÎŞ
-    Money,     //½ğÇ®
-    Armor,     //ÒÂ·ş
-    Sword,     //½£
-    Bow,       //¹­
-    Shield,    //¶Ü
-    Materials, //²ÄÁÏ
-    Food,      //Ê³Îï
-    Prop       //µÀ¾ß
+    None,      //æ— 
+    Money,     //é‡‘é’±
+    Armor,     //è¡£æœ
+    Sword,     //å‰‘
+    Bow,       //å¼“
+    Shield,    //ç›¾
+    Materials, //ææ–™
+    Food,      //é£Ÿç‰©
+    Prop       //é“å…·
 };

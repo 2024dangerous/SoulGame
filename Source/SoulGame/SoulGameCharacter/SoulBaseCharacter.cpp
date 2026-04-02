@@ -20,6 +20,11 @@
 #include "SoulGameAI/SoulBaseEnemy.h"
 #include "SoulGameInstance.h"
 #include "SoulGameDebug/DebugTools.h"
+#include "SoulGameGAS/SoulAbilitySystemComponent.h"
+#include "SoulGameGAS/SoulAttributeSet.h"
+#include "SoulGameGAS/SoulGameplayAbility.h"
+#include "SoulGameCharacter/SoulPickupComponent.h"
+#include "SoulGameCharacter/SoulPerceptionComponent.h"
 
 
 // Sets default values
@@ -27,7 +32,7 @@ ASoulBaseCharacter::ASoulBaseCharacter()
 {
     // Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
-    //使用控制器旋转
+    //不使用控制器旋转
     bUseControllerRotationPitch = false;
     bUseControllerRotationRoll = false;
     bUseControllerRotationYaw = false;
@@ -36,7 +41,7 @@ ASoulBaseCharacter::ASoulBaseCharacter()
 
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(RootComponent);
-    CameraBoom->TargetArmLength = 350.0f;                     //弹簧臂长度
+    CameraBoom->TargetArmLength = CameraDefaultArmLength;                     //弹簧臂长度
     CameraBoom->bUsePawnControlRotation = true;               //弹簧臂使用pawn控制旋转
     CameraBoom->bEnableCameraLag = true;                      //启用摄像机延迟
     CameraBoom->bEnableCameraRotationLag = true;              //启用摄像机旋转延迟
@@ -46,12 +51,24 @@ ASoulBaseCharacter::ASoulBaseCharacter()
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom);
 
-    PerceptionEnemy = CreateDefaultSubobject<USphereComponent>(TEXT("PerceptionEnemy"));
-    PerceptionEnemy->SetupAttachment(RootComponent);
-    PerceptionEnemy->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-    PerceptionEnemy->SetCollisionObjectType(ECC_WorldDynamic);
-    PerceptionEnemy->SetCollisionResponseToAllChannels(ECR_Ignore);
-    PerceptionEnemy->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    // ============ 敌人感知组件 ============
+    PerceptionComponent = CreateDefaultSubobject<USoulPerceptionComponent>(TEXT("PerceptionComponent"));
+    // 创建感知球并赋值给组件
+    USphereComponent* PerceptionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("PerceptionSphere"));
+    PerceptionSphere->SetupAttachment(RootComponent);
+    PerceptionSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    PerceptionSphere->SetCollisionObjectType(ECC_WorldDynamic);
+    PerceptionSphere->SetCollisionResponseToAllChannels(ECR_Ignore);
+    PerceptionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+    PerceptionComponent->PerceptionSphere = PerceptionSphere;
+
+    // ============ GAS 初始化 ============
+    AbilitySystemComponent = CreateDefaultSubobject<USoulAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+    AbilitySystemComponent->SetIsReplicated(true);
+    AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
+
+    // ============ 拾取交互组件 ============
+    PickupComponent = CreateDefaultSubobject<USoulPickupComponent>(TEXT("PickupComponent"));
 
 
     //玩家状态
@@ -62,21 +79,16 @@ ASoulBaseCharacter::ASoulBaseCharacter()
     //玩家属性
     CurrentHealth = 100.f;
     MaxHealth = 100.f;
-    NewHealth = 100.f;
-    SubHealth = 10.f;
-    AddHealth = 5.f;
 
     CurrentMana = 100.f;
     MaxMana = 100.f;
-    NewMana = 100.f;
-    SubMana = 10.f;
-    AddMana = 5.f;
 
     MaxStamina = 100.f;
     CurrentStamina = 100.f;
-    NewStamina = 100.f;
-    SubStamina = 10.f;
-    AddStamina = 5.f;
+
+    // 体力恢复速率和消耗阈值
+    StaminaRestoreRate = 10.f;
+    LastStaminaCostThreshold = 0.f;
 
     DesiredRotation = FRotator(0, 0, 0);
     RollingForwordValue = 0;
@@ -94,10 +106,8 @@ void ASoulBaseCharacter::BeginPlay()
     {
         PC->SetInputMode(FInputModeGameOnly());
     }
-    USoulEventManager::Get()->NearbyInteractables.BindUObject(this, &ASoulBaseCharacter::OnNearbyInteractablesChanged);
-
-    PerceptionEnemy->OnComponentBeginOverlap.AddUniqueDynamic(this, &ASoulBaseCharacter::AddPerceptionEnemy);
-    PerceptionEnemy->OnComponentEndOverlap.AddUniqueDynamic(this, &ASoulBaseCharacter::SubPerceptionEnemy);
+    // 拾取组件会在自己的 BeginPlay 中自动订阅 NearbyInteractables 委托
+    // 感知组件会在自己的 BeginPlay 中自动绑定碰撞球事件
 }
 
 // Called every frame
@@ -106,39 +116,6 @@ void ASoulBaseCharacter::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
     // 计算角色的旋转
     CalculatedRotation();
-}
-
-void ASoulBaseCharacter::AddPerceptionEnemy(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-    if (ASoulBaseEnemy* SoulEnemy = Cast<ASoulBaseEnemy>(OtherActor))
-    {
-        // 检查敌人是否已经在数组中
-        if (!EnemyArray.Contains(SoulEnemy))
-        {
-            EnemyArray.Add(SoulEnemy);
-            USoulEventManager::Get()->OpenEnemyHealth.ExecuteIfBound(SoulEnemy->EnemyName,true);
-            USoulEventManager::Get()->SwitchEnemyHealth.ExecuteIfBound(SoulEnemy->EnemyName, SoulEnemy->CurrentHealth / SoulEnemy->MaxHealth);
-            ZhouXiaoPeng_PRINT(FString::Printf(TEXT("添加敌人到敌人数组: %d"), EnemyArray.Num()));
-        }
-    }
-}
-
-void ASoulBaseCharacter::SubPerceptionEnemy(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-    if (ASoulBaseEnemy* SoulEnemy = Cast<ASoulBaseEnemy>(OtherActor))
-    {
-        // 检查敌人是否已经在数组中
-        if (EnemyArray.Contains(SoulEnemy))
-        {
-            EnemyArray.Remove(SoulEnemy);
-            if (EnemyArray.Num() == 0)
-            {
-                USoulEventManager::Get()->OpenEnemyHealth.ExecuteIfBound(SoulEnemy->EnemyName, false);
-                Focus();
-            }
-            ZhouXiaoPeng_PRINT(FString::Printf(TEXT("删除敌人到敌人数组: %d"), EnemyArray.Num()));
-        }
-    }
 }
 
 #pragma region "Input"
@@ -210,7 +187,7 @@ void ASoulBaseCharacter::Walk(const FInputActionValue& Value)
         // Value.Get<bool>() 返回 true 表示 "Started"，false 表示 "Completed"
         bool bIsAccelerating = Value.Get<bool>();
 
-        MovementComp->MaxWalkSpeed = bIsAccelerating ? 200 : 500;
+        MovementComp->MaxWalkSpeed = bIsAccelerating ? SlowWalkSpeed : DefaultWalkSpeed;
     }
 }
 //奔跑
@@ -224,7 +201,7 @@ void ASoulBaseCharacter::Run(const FInputActionValue& Value)
         // Value.Get<bool>() 返回 true 表示 "Started"，false 表示 "Completed"
         bIsRunActive = Value.Get<bool>();
 
-        MovementComp->MaxWalkSpeed = bIsRunActive ? 900 : 500;
+        MovementComp->MaxWalkSpeed = bIsRunActive ? SprintSpeed : DefaultWalkSpeed;
     }
 }
 //摄像机远近
@@ -236,16 +213,16 @@ void ASoulBaseCharacter::Visibility(const FInputActionValue& Value)
 
     if (Value.Get<float>() > 0)
     {
-        if (CameraBoom->TargetArmLength >= 200)
+        if (CameraBoom->TargetArmLength >= CameraMinArmLength)
         {
-            CameraBoom->TargetArmLength = ArmLength - 10;
+            CameraBoom->TargetArmLength = ArmLength - CameraZoomStep;
         }
     }
     else
     {
-        if (CameraBoom->TargetArmLength <= 600)
+        if (CameraBoom->TargetArmLength <= CameraMaxArmLength)
         {
-            CameraBoom->TargetArmLength = ArmLength + 10;
+            CameraBoom->TargetArmLength = ArmLength + CameraZoomStep;
         }
     }
 }
@@ -264,18 +241,11 @@ void ASoulBaseCharacter::ShowMouse(const FInputActionValue& Value)
 }
 void ASoulBaseCharacter::Interaction(const FInputActionValue& Value)
 {
-    if (PickupItemArray.Num() == 0) return;
-
-    TArray<APickupItem*> ItemsCopy = PickupItemArray;
-    for (APickupItem* Item : ItemsCopy)
+    // 委托给拾取组件处理
+    if (PickupComponent)
     {
-        if (IsValid(Item))  // 确保不是空指针
-        {
-            Item->Destroy();
-            PickupItemArray.Remove(Item);
-        }
+        PickupComponent->PickupAllItems();
     }
-
 }
 
 void ASoulBaseCharacter::EnableMeleeCollision()
@@ -293,7 +263,7 @@ void ASoulBaseCharacter::EnableMeleeCollision()
         ASoulBaseEnemy* Enemy = Cast<ASoulBaseEnemy>(AttackEnemy);
         if (Enemy)
         {
-            Enemy->Injure(10);
+            Enemy->Injure(MeleeCollisionDamage);
         }
     }
 
@@ -329,41 +299,6 @@ bool ASoulBaseCharacter::CanRun()
 }
 #pragma endregion "Input"
 #pragma region "Function"
-void ASoulBaseCharacter::SetPickupItemArray(APickupItem* PickupItem, bool bIsAddOrSub)
-{
-    if (!PickupItem) return;
-
-    if (bIsAddOrSub)
-    {
-        if (!PickupItemArray.Contains(PickupItem))
-        {
-            PickupItemArray.Add(PickupItem);
-        }
-    }
-    else
-    {
-        PickupItemArray.Remove(PickupItem);
-    }
-    SetInteractionUIVisibility();
-}
-void ASoulBaseCharacter::OnNearbyInteractablesChanged(AActor* PickupItem, bool bIsAddOrSub)
-{
-    if (APickupItem* TypedItem = Cast<APickupItem>(PickupItem))
-    {
-        SetPickupItemArray(TypedItem, bIsAddOrSub);
-    }
-}
-void ASoulBaseCharacter::SetInteractionUIVisibility()
-{
-    if (!PickupItemArray.IsEmpty())
-    {
-        USoulEventManager::Get()->OpenInteractionUI.ExecuteIfBound(true, FText::FromString(TEXT("拾取")));
-    }
-    else
-    {
-        USoulEventManager::Get()->OpenInteractionUI.ExecuteIfBound(false, FText::FromString(TEXT("")));
-    }
-}
 //获取战斗UI
 UUI_FightMainUI* ASoulBaseCharacter::GetFightMainUI()
 {
@@ -378,23 +313,25 @@ UUI_FightMainUI* ASoulBaseCharacter::GetFightMainUI()
 }
 
 
-void ASoulBaseCharacter::SetHealth(float InCurrentHealth, float InNewHealth,float InMaxHealth)
+void ASoulBaseCharacter::SetHealth(float InNewHealth)
 {
-    USoulEventManager::Get()->OnStatusBoxChanged.Broadcast(EStatusBox::Health, InCurrentHealth, InNewHealth, InMaxHealth);
-    CurrentStamina = InNewHealth;
+    CurrentHealth = FMath::Clamp(InNewHealth, 0.f, MaxHealth);
+    // 同步到 GAS（GAS 属性变化委托会自动通知 UI）
+    SyncAttributeToGAS(USoulAttributeSet::GetHealthAttribute(), CurrentHealth);
 }
 
-void ASoulBaseCharacter::SetMana(float InCurrentMana, float InNewMana,float InMaxMana)
+void ASoulBaseCharacter::SetMana(float InNewMana)
 {
-    USoulEventManager::Get()->OnStatusBoxChanged.Broadcast(EStatusBox::Mana, InCurrentMana, InNewMana, InMaxMana);
-    CurrentStamina = InNewMana;
+    CurrentMana = FMath::Clamp(InNewMana, 0.f, MaxMana);
+    // 同步到 GAS（GAS 属性变化委托会自动通知 UI）
+    SyncAttributeToGAS(USoulAttributeSet::GetManaAttribute(), CurrentMana);
 }
 
-//体力值变化时广播
-void ASoulBaseCharacter::SetStamina(float InCurrentStamina, float InNewStamina,float InMaxStamina)
+void ASoulBaseCharacter::SetStamina(float InNewStamina)
 {
-    USoulEventManager::Get()->OnStatusBoxChanged.Broadcast(EStatusBox::Stamina,InCurrentStamina, InNewStamina, InMaxStamina);
-    CurrentStamina = InNewStamina;
+    CurrentStamina = FMath::Clamp(InNewStamina, 0.f, MaxStamina);
+    // 同步到 GAS（GAS 属性变化委托会自动通知 UI）
+    SyncAttributeToGAS(USoulAttributeSet::GetStaminaAttribute(), CurrentStamina);
 }
 //显示资源不足的通知(IRText为通知文本，IRColor为通知颜色)
 void ASoulBaseCharacter::ShowIR(FText IRText, FSlateColor IRColor)
@@ -431,25 +368,7 @@ void ASoulBaseCharacter::CalculatedRotation()
         }
     }
 }
-void ASoulBaseCharacter::fhnaof()
-{
-    ////PickupItemPool
-    //USoulGameInstance* GameInstance = Cast<USoulGameInstance>(GetGameInstance());
 
-
-    //if (GameInstance)
-    //{
-    //    UObject* Obj = GameInstance->PoolManager->Acquire("PickupItemPool", GetWorld());
-    //    if (Obj)
-    //    {
-    //        GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Cyan, TEXT("fwfwfwf"));
-
-    //    }
-    //    else {
-    //        GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Cyan, TEXT("fwfwffwafawfaff"));
-    //    }
-    //}
-}
 #pragma endregion "Function"
 
 #pragma region "GameplayTags"
@@ -555,3 +474,105 @@ void ASoulBaseCharacter::InitializeStateMachine()
 }
 
 #pragma endregion "GameplayTags"
+
+#pragma region "GAS"
+
+UAbilitySystemComponent* ASoulBaseCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+USoulAbilitySystemComponent* ASoulBaseCharacter::GetSoulAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+const USoulAttributeSet* ASoulBaseCharacter::GetSoulAttributeSet() const
+{
+	return AttributeSet;
+}
+
+void ASoulBaseCharacter::InitializeGAS()
+{
+	if (bGASInitialized)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ASoulBaseCharacter::InitializeGAS - GAS 已初始化"));
+		return;
+	}
+
+	if (!AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("ASoulBaseCharacter::InitializeGAS - AbilitySystemComponent 为空"));
+		return;
+	}
+
+	// 初始化 ASC
+	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+	// 获取属性集（ASC 会自动创建 AttributeSet 子对象）
+	AttributeSet = AbilitySystemComponent->GetSet<USoulAttributeSet>();
+	if (!AttributeSet)
+	{
+		// 手动创建属性集
+		USoulAttributeSet* NewAttributeSet = NewObject<USoulAttributeSet>(this);
+		AbilitySystemComponent->AddAttributeSetSubobject(NewAttributeSet);
+		AttributeSet = NewAttributeSet;
+	}
+
+	// 同步旧属性到 GAS（兼容过渡期）
+	AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetHealthAttribute(), CurrentHealth);
+	AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetMaxHealthAttribute(), MaxHealth);
+	AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetManaAttribute(), CurrentMana);
+	AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetMaxManaAttribute(), MaxMana);
+	AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetStaminaAttribute(), CurrentStamina);
+	AbilitySystemComponent->SetNumericAttributeBase(USoulAttributeSet::GetMaxStaminaAttribute(), MaxStamina);
+
+	// 授予默认技能
+	if (DefaultAbilities.Num() > 0)
+	{
+		AbilitySystemComponent->InitializeDefaultAbilities(DefaultAbilities);
+	}
+
+	bGASInitialized = true;
+	UE_LOG(LogTemp, Log, TEXT("ASoulBaseCharacter::InitializeGAS - GAS 初始化完成，属性已同步"));
+}
+
+float ASoulBaseCharacter::GetHealth() const
+{
+	// 优先从 GAS 读取
+	if (AttributeSet)
+	{
+		return AttributeSet->GetHealth();
+	}
+	return CurrentHealth;
+}
+
+float ASoulBaseCharacter::GetCurrentStamina() const
+{
+	// 优先从 GAS 读取
+	if (AttributeSet)
+	{
+		return AttributeSet->GetStamina();
+	}
+	return CurrentStamina;
+}
+
+float ASoulBaseCharacter::GetCurrentMana() const
+{
+	// 优先从 GAS 读取
+	if (AttributeSet)
+	{
+		return AttributeSet->GetMana();
+	}
+	return CurrentMana;
+}
+
+void ASoulBaseCharacter::SyncAttributeToGAS(const FGameplayAttribute& Attribute, float NewValue)
+{
+	if (AbilitySystemComponent && bGASInitialized)
+	{
+		AbilitySystemComponent->SetNumericAttributeBase(Attribute, NewValue);
+	}
+}
+
+#pragma endregion "GAS"

@@ -2,7 +2,6 @@ Binaries
 DerivedDataCache
 Intermediate
 Saved
-Content
 .vscode
 .vs
 *.VC.db
@@ -15,3 +14,4 @@ Content
 *.xcworkspace
 .vsconfig
 shadertoolsconfig.json
+build_output.txt

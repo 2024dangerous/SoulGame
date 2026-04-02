@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -19,7 +19,7 @@ public:
 	UPROPERTY(BlueprintReadWrite,meta=(BindWidget))
     UTextBlock* TextBlock_Interaction;
 
-	// °ó¶¨¶¯»­
+	// ç»‘å®šåŠ¨ç”»
     UPROPERTY(meta = (BindWidgetAnim), Transient)
     UWidgetAnimation* Interaction_Visable;
 

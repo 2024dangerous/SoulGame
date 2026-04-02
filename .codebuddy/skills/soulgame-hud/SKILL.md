@@ -52,16 +52,7 @@ when: |
 - 动态材质动画效果
 - 受伤/治疗动画
 - Material Parameter控制视觉效果
-
-### 状态类型
-```cpp
-UENUM()
-enum class EStatusBox : uint8 {
-    Health,
-    Mana,
-    Stamina
-};
-```
+- 通过 GAS 属性变化委托直接监听属性变化（不再依赖 OnStatusBoxChanged）
 
 ## UI_EnemyHealth（敌人血条）
 

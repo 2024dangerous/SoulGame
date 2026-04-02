@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameTags/SoulStateMachineComponent.h"
 #include "SoulGameTags/SoulGameTagsManager.h"
@@ -17,7 +17,7 @@ void USoulStateMachineComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	// 如果当前状态无效，设置初始状态
+	// 初始化默认层（兼容旧接口）
 	if (!CurrentState.IsValid())
 	{
 		if (InitialState.IsValid())
@@ -26,7 +26,6 @@ void USoulStateMachineComponent::InitializeComponent()
 		}
 		else
 		{
-			// 默认使用 Idle 状态
 			USoulGameTagsManager* TagsManager = USoulGameTagsManager::Get();
 			if (TagsManager)
 			{
@@ -39,25 +38,37 @@ void USoulStateMachineComponent::InitializeComponent()
 			AddTagToOwner(CurrentState);
 		}
 	}
+
+	// 初始化所有注册的层
+	for (FSoulStateLayer& Layer : StateLayers)
+	{
+		if (!Layer.CurrentState.IsValid() && Layer.InitialState.IsValid())
+		{
+			Layer.CurrentState = Layer.InitialState;
+			AddTagToOwner(Layer.CurrentState);
+		}
+	}
 }
+
+// ============ 单层操作（兼容旧接口）===========
 
 bool USoulStateMachineComponent::SetState(FGameplayTag NewState)
 {
 	if (!NewState.IsValid())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetState - Invalid state"));
+        UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetState - 无效状态"));
 		return false;
 	}
 
 	if (!IsValidState(NewState))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetState - State not in allowed list: %s"), *NewState.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetState - 状态不在允许列表中: %s"), *NewState.ToString());
 		return false;
 	}
 
 	if (!CanTransitionTo(NewState))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetState - Cannot transition to: %s"), *NewState.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetState - 无法转换到: %s"), *NewState.ToString());
 		return false;
 	}
 
@@ -70,10 +81,10 @@ bool USoulStateMachineComponent::SetState(FGameplayTag NewState)
 		OnStateExit.Broadcast(OldState, GetOwner());
 	}
 
-	// 更新状态
-	CurrentState = NewState;
+    // 更新状态
+    CurrentState = NewState;
 
-	// 添加新状态标签
+    // 添加新状态标签
 	AddTagToOwner(CurrentState);
 	OnStateEnter.Broadcast(CurrentState, GetOwner());
 
@@ -83,7 +94,7 @@ bool USoulStateMachineComponent::SetState(FGameplayTag NewState)
 	// 广播状态改变事件
 	OnStateChanged.Broadcast(OldState, NewState, GetOwner());
 
-	UE_LOG(LogTemp, Log, TEXT("USoulStateMachineComponent::SetState - State changed from %s to %s"), 
+    UE_LOG(LogTemp, Log, TEXT("USoulStateMachineComponent::SetState - 状态从 %s 变为 %s"),
 		*OldState.ToString(), *NewState.ToString());
 
 	return true;
@@ -96,25 +107,40 @@ bool USoulStateMachineComponent::CanTransitionTo(FGameplayTag NewState) const
 		return false;
 	}
 
-	// 检查冷却
 	if (!IsCooldownComplete(NewState))
 	{
 		return false;
 	}
 
-	// 如果没有转换规则，只要状态有效就可以转换
 	if (TransitionRules.Num() == 0)
 	{
 		return true;
 	}
 
-	// 检查是否有转换规则允许这个转换
 	for (const FStateTransitionRule& Rule : TransitionRules)
 	{
 		if (Rule.TargetState == NewState)
 		{
-			// 检查必需的标签
-			if (Rule.RequiredTags.Num() > 0)
+            // 检查阻止标签
+            if (Rule.BlockedTags.Num() > 0)
+            {
+                AActor* Owner = GetOwner();
+                if (Owner)
+                {
+                    TScriptInterface<ISoulGameplayTagInterface> TagInterface(Owner);
+                    if (TagInterface)
+                    {
+                        FGameplayTagContainer OwnerTags = TagInterface->GetGameplayTagContainer();
+                        if (OwnerTags.HasAny(Rule.BlockedTags))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            // 检查必需标签
+            if (Rule.RequiredTags.Num() > 0)
 			{
 				AActor* Owner = GetOwner();
 				if (Owner)
@@ -137,24 +163,19 @@ bool USoulStateMachineComponent::CanTransitionTo(FGameplayTag NewState) const
 		}
 	}
 
-	// 如果没有找到匹配的规则，检查是否同一状态
 	return (CurrentState == NewState);
 }
 
 void USoulStateMachineComponent::AddTransitionRule(const FGameplayTag FromState, const FStateTransitionRule& Rule)
 {
-	// 检查是否已存在相同的规则
 	for (FStateTransitionRule& ExistingRule : TransitionRules)
 	{
 		if (ExistingRule.TargetState == Rule.TargetState)
 		{
-			// 更新现有规则
 			ExistingRule = Rule;
 			return;
 		}
 	}
-
-	// 添加新规则
 	TransitionRules.Add(Rule);
 }
 
@@ -170,8 +191,7 @@ bool USoulStateMachineComponent::IsCooldownComplete(FGameplayTag TargetState) co
 {
 	if (const float* LastTime = LastTransitionTimes.Find(TargetState))
 	{
-		// 查找对应的转换规则获取冷却时间
-		float CooldownTime = 0.5f; // 默认冷却时间
+		float CooldownTime = 0.5f;
 		for (const FStateTransitionRule& Rule : TransitionRules)
 		{
 			if (Rule.TargetState == TargetState)
@@ -187,15 +207,184 @@ bool USoulStateMachineComponent::IsCooldownComplete(FGameplayTag TargetState) co
 	return true;
 }
 
+// ============ 鍒嗗眰鐘舵€佹満鎿嶄綔 ============
+
+void USoulStateMachineComponent::RegisterLayer(FName LayerName, FGameplayTag LayerTag,
+	FGameplayTag InInitialState, const FGameplayTagContainer& InAllowedStates, int32 Priority)
+{
+    // 检查是否已存在同名层
+	if (FindLayer(LayerName))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::RegisterLayer - 层已存在: %s"), *LayerName.ToString());
+		return;
+	}
+
+	FSoulStateLayer NewLayer;
+	NewLayer.LayerName = LayerName;
+	NewLayer.LayerTag = LayerTag;
+	NewLayer.InitialState = InInitialState;
+	NewLayer.CurrentState = InInitialState;
+	NewLayer.AllowedStates = InAllowedStates;
+	NewLayer.Priority = Priority;
+	NewLayer.bEnabled = true;
+
+	StateLayers.Add(NewLayer);
+
+	// 添加初始状态标签
+	if (InInitialState.IsValid())
+	{
+		AddTagToOwner(InInitialState);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("USoulStateMachineComponent::RegisterLayer - 注册层: %s (初始状态: %s, 优先级: %d)"),
+		*LayerName.ToString(), *InInitialState.ToString(), Priority);
+}
+
+bool USoulStateMachineComponent::SetLayerState(FName LayerName, FGameplayTag NewState)
+{
+	FSoulStateLayer* Layer = FindLayer(LayerName);
+	if (!Layer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetLayerState - 层不存在: %s"), *LayerName.ToString());
+		return false;
+	}
+
+	if (!Layer->bEnabled)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetLayerState - 层已禁用: %s"), *LayerName.ToString());
+		return false;
+	}
+
+	if (!NewState.IsValid())
+	{
+		return false;
+	}
+
+	if (!IsValidLayerState(*Layer, NewState))
+	{
+        UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::SetLayerState - 状态不在层 %s 的允许列表中: %s"),
+			*LayerName.ToString(), *NewState.ToString());
+		return false;
+	}
+
+	if (!CanLayerTransitionTo(*Layer, NewState))
+	{
+		return false;
+	}
+
+	FGameplayTag OldState = Layer->CurrentState;
+
+    // 移除旧状态标签
+    if (OldState.IsValid())
+    {
+        RemoveTagFromOwner(OldState);
+        OnStateExit.Broadcast(OldState, GetOwner());
+    }
+
+    // 更新状态
+    Layer->CurrentState = NewState;
+
+    // 添加新状态标签
+	AddTagToOwner(NewState);
+	OnStateEnter.Broadcast(NewState, GetOwner());
+
+	// 记录转换时间
+	Layer->LastTransitionTimes.Add(NewState, GetWorld()->GetTimeSeconds());
+
+	// 广播事件
+	OnLayerStateChanged.Broadcast(LayerName, OldState, NewState, GetOwner());
+	OnStateChanged.Broadcast(OldState, NewState, GetOwner());
+
+    UE_LOG(LogTemp, Log, TEXT("USoulStateMachineComponent::SetLayerState - 层 %s: %s -> %s"),
+		*LayerName.ToString(), *OldState.ToString(), *NewState.ToString());
+
+	return true;
+}
+
+FGameplayTag USoulStateMachineComponent::GetLayerState(FName LayerName) const
+{
+	const FSoulStateLayer* Layer = FindLayer(LayerName);
+	if (Layer)
+	{
+		return Layer->CurrentState;
+	}
+	return FGameplayTag();
+}
+
+bool USoulStateMachineComponent::IsLayerInState(FName LayerName, FGameplayTag State) const
+{
+	const FSoulStateLayer* Layer = FindLayer(LayerName);
+	if (Layer)
+	{
+		return Layer->CurrentState == State;
+	}
+	return false;
+}
+
+void USoulStateMachineComponent::AddLayerTransitionRule(FName LayerName, const FStateTransitionRule& Rule)
+{
+	FSoulStateLayer* Layer = FindLayer(LayerName);
+	if (!Layer)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("USoulStateMachineComponent::AddLayerTransitionRule - 层不存在: %s"), *LayerName.ToString());
+		return;
+	}
+
+	// 检查是否已存在相同目标状态的规则
+	for (FStateTransitionRule& ExistingRule : Layer->TransitionRules)
+	{
+		if (ExistingRule.TargetState == Rule.TargetState)
+		{
+			ExistingRule = Rule;
+			return;
+		}
+	}
+	Layer->TransitionRules.Add(Rule);
+}
+
+void USoulStateMachineComponent::SetLayerEnabled(FName LayerName, bool bEnabled)
+{
+	FSoulStateLayer* Layer = FindLayer(LayerName);
+	if (Layer)
+	{
+		Layer->bEnabled = bEnabled;
+		UE_LOG(LogTemp, Log, TEXT("USoulStateMachineComponent::SetLayerEnabled - 层 %s: %s"),
+			*LayerName.ToString(), bEnabled ? TEXT("启用") : TEXT("禁用"));
+	}
+}
+
+TMap<FName, FGameplayTag> USoulStateMachineComponent::GetAllLayerStates() const
+{
+	TMap<FName, FGameplayTag> Result;
+	for (const FSoulStateLayer& Layer : StateLayers)
+	{
+		Result.Add(Layer.LayerName, Layer.CurrentState);
+	}
+	return Result;
+}
+
+bool USoulStateMachineComponent::IsAnyLayerInState(FGameplayTag State) const
+{
+	for (const FSoulStateLayer& Layer : StateLayers)
+	{
+		if (Layer.CurrentState == State)
+		{
+			return true;
+		}
+	}
+	// 也检查默认层
+	return CurrentState == State;
+}
+
+// ============ 内部方法 ============
+
 bool USoulStateMachineComponent::IsValidState(FGameplayTag State) const
 {
-	// 如果允许列表为空，允许所有状态
 	if (AllowedStates.Num() == 0)
 	{
 		return true;
 	}
 
-	// 检查状态是否在允许列表中，或是否是允许状态的子标签
 	for (const FGameplayTag& AllowedTag : AllowedStates)
 	{
 		if (AllowedTag.MatchesTag(State) || State.MatchesTag(AllowedTag))
@@ -230,4 +419,131 @@ void USoulStateMachineComponent::RemoveTagFromOwner(FGameplayTag Tag)
 			TagInterface->RemoveGameplayTag(Tag);
 		}
 	}
+}
+
+FSoulStateLayer* USoulStateMachineComponent::FindLayer(FName LayerName)
+{
+	for (FSoulStateLayer& Layer : StateLayers)
+	{
+		if (Layer.LayerName == LayerName)
+		{
+			return &Layer;
+		}
+	}
+	return nullptr;
+}
+
+const FSoulStateLayer* USoulStateMachineComponent::FindLayer(FName LayerName) const
+{
+	for (const FSoulStateLayer& Layer : StateLayers)
+	{
+		if (Layer.LayerName == LayerName)
+		{
+			return &Layer;
+		}
+	}
+	return nullptr;
+}
+
+bool USoulStateMachineComponent::IsValidLayerState(const FSoulStateLayer& Layer, FGameplayTag State) const
+{
+	if (Layer.AllowedStates.Num() == 0)
+	{
+		return true;
+	}
+
+	for (const FGameplayTag& AllowedTag : Layer.AllowedStates)
+	{
+		if (AllowedTag.MatchesTag(State) || State.MatchesTag(AllowedTag))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool USoulStateMachineComponent::IsLayerCooldownComplete(const FSoulStateLayer& Layer, FGameplayTag TargetState) const
+{
+	if (const float* LastTime = Layer.LastTransitionTimes.Find(TargetState))
+	{
+		float CooldownTime = 0.5f;
+		for (const FStateTransitionRule& Rule : Layer.TransitionRules)
+		{
+			if (Rule.TargetState == TargetState)
+			{
+				CooldownTime = Rule.CooldownTime;
+				break;
+			}
+		}
+
+		float Elapsed = GetWorld()->GetTimeSeconds() - *LastTime;
+		return Elapsed >= CooldownTime;
+	}
+	return true;
+}
+
+bool USoulStateMachineComponent::CanLayerTransitionTo(const FSoulStateLayer& Layer, FGameplayTag NewState) const
+{
+	if (!NewState.IsValid() || !IsValidLayerState(Layer, NewState))
+	{
+		return false;
+	}
+
+	if (!IsLayerCooldownComplete(Layer, NewState))
+	{
+		return false;
+	}
+
+	if (Layer.TransitionRules.Num() == 0)
+	{
+		return true;
+	}
+
+	for (const FStateTransitionRule& Rule : Layer.TransitionRules)
+	{
+		if (Rule.TargetState == NewState)
+		{
+			// 检查阻止标签
+			if (Rule.BlockedTags.Num() > 0)
+			{
+				AActor* Owner = GetOwner();
+				if (Owner)
+				{
+					TScriptInterface<ISoulGameplayTagInterface> TagInterface(Owner);
+					if (TagInterface)
+					{
+						FGameplayTagContainer OwnerTags = TagInterface->GetGameplayTagContainer();
+						if (OwnerTags.HasAny(Rule.BlockedTags))
+						{
+							return false;
+						}
+					}
+				}
+			}
+
+			// 检查必需标签
+			if (Rule.RequiredTags.Num() > 0)
+			{
+				AActor* Owner = GetOwner();
+				if (Owner)
+				{
+					TScriptInterface<ISoulGameplayTagInterface> TagInterface(Owner);
+					if (TagInterface)
+					{
+						FGameplayTagContainer OwnerTags = TagInterface->GetGameplayTagContainer();
+						if (OwnerTags.HasAll(Rule.RequiredTags))
+						{
+							return true;
+						}
+					}
+				}
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+
+	return (Layer.CurrentState == NewState);
 }

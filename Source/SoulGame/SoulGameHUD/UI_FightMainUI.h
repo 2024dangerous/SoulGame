@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,6 +6,8 @@
 #include "SoulGameHUD/SoulGameWidgetRule.h"
 #include "UI_FightMainUI.generated.h"
 
+struct FOnAttributeChangeData;
+class UAbilitySystemComponent;
 class UTextBlock;
 class UOverlay;
 class UUI_StateBar;
@@ -43,24 +45,24 @@ public:
 	UUI_FightResult* UI_FightResult;
 
 
-	//×ÊÔ´²»×ãÎÄ×Ö
+	//èµ„æºä¸è¶³æ–‡å­—
 	UPROPERTY(BlueprintReadWrite,meta= (BindWidget))
 	UTextBlock* TextBlock_ShowInsufficientResource;
 #pragma endregion "WidgetComponent"
 #pragma region "WidgetAnimation"
-	// °ó¶¨¶¯»­
+	// ç»‘å®šåŠ¨ç”»
     UPROPERTY(BlueprintReadWrite,meta = (BindWidgetAnim), Transient)
     UWidgetAnimation* ShowInsufficientResource;
 #pragma endregion "WidgetAnimation"
 
 
-	//²¥·Å×ÊÔ´²»×ã¶¯»­£¨ÉèÖÃ×ÊÔ´Ãû³Æ£©
+	//æ’­æ”¾èµ„æºä¸è¶³åŠ¨ç”»ï¼ˆè®¾ç½®èµ„æºåç§°ï¼‰
 	UFUNCTION(BlueprintCallable)
     void PlayShowIRAnimation(FText ShowText);
-    //¹Ø±Õ×ÊÔ´²»×ã¶¯»­
+    //å…³é—­èµ„æºä¸è¶³åŠ¨ç”»
 	UFUNCTION(BlueprintCallable)
     void CloseShowIR();
-    //ÉèÖÃ×ÊÔ´²»×ãÎÄ×ÖÑÕÉ«
+    //è®¾ç½®èµ„æºä¸è¶³æ–‡å­—é¢œè‰²
 	UFUNCTION(BlueprintCallable)
 	void SetIRColor(FSlateColor IRColor);
 
@@ -73,12 +75,24 @@ public:
 	UFUNCTION()
 	void OpenUI_FightResult();
 protected:
-    //ÌåÁ¦±ä»¯ÊÂ¼ş
-    UFUNCTION()
-    void HandleStatusValueChanged(EStatusBox StatusBox, float CurrentValue,float NewValue,float MaxValue);
+    // ============ GAS å±æ€§å˜åŒ–å›è°ƒ ============
+    void HandleHealthChanged(const FOnAttributeChangeData& Data);
+    void HandleManaChanged(const FOnAttributeChangeData& Data);
+    void HandleStaminaChanged(const FOnAttributeChangeData& Data);
+
+    // ç»‘å®š/è§£ç»‘ GAS å±æ€§å˜åŒ–å§”æ‰˜
+    void BindGASAttributeDelegates();
+    void UnbindGASAttributeDelegates();
+
+    // ç¼“å­˜çš„ ASC å¼•ç”¨
+    UPROPERTY()
+    UAbilitySystemComponent* CachedASC;
 
     UPROPERTY()
     ASoulPlayerCharacter* SoulPlayerCharacter;
 
-
+    // ç¼“å­˜æ—§å€¼ï¼ˆç”¨äºåŠ¨ç”»è¿‡æ¸¡ï¼‰
+    float CachedOldHealth = 0.f;
+    float CachedOldMana = 0.f;
+    float CachedOldStamina = 0.f;
 };

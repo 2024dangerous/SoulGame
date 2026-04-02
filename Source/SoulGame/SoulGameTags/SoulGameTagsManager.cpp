@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameTags/SoulGameTagsManager.h"
 #include "SoulGameData/SoulTagsConfig.h"
@@ -18,7 +18,7 @@ USoulGameTagsManager* USoulGameTagsManager::Get()
 	{
 		Singleton = NewObject<USoulGameTagsManager>();
 		Singleton->AddToRoot();
-		Singleton->Initialize(false); // 默认使用硬编码模式
+		Singleton->Initialize(false); // 榛樿浣跨敤纭紪鐮佹ā寮?
 	}
 	return Singleton;
 }
@@ -33,10 +33,10 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 		UE_LOG(LogTemp, Log, TEXT("USoulGameTagsManager::Initialize - Using DataAsset mode with config: %s"),
 			*TagsConfig->GetName());
 
-		// 从 DataAsset 加载所有标签到缓存
+		// 浠?DataAsset 鍔犺浇鎵€鏈夋爣绛惧埌缂撳瓨
 		FGameplayTagContainer AllTags = TagsConfig->GetAllTags();
 
-		// 行为标签
+		// 琛屼负鏍囩
 		if (TagsConfig->BehaviorTags.bEnabled)
 		{
 			for (const auto& Entry : TagsConfig->BehaviorTags.Tags)
@@ -48,7 +48,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 			}
 		}
 
-		// 武器标签
+		// 姝﹀櫒鏍囩
 		if (TagsConfig->WeaponTags.bEnabled)
 		{
 			for (const auto& Entry : TagsConfig->WeaponTags.Tags)
@@ -60,7 +60,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 			}
 		}
 
-		// 战斗标签
+		// 鎴樻枟鏍囩
 		if (TagsConfig->CombatTags.bEnabled)
 		{
 			for (const auto& Entry : TagsConfig->CombatTags.Tags)
@@ -72,7 +72,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 			}
 		}
 
-		// 事件标签
+		// 浜嬩欢鏍囩
 		if (TagsConfig->EventTags.bEnabled)
 		{
 			for (const auto& Entry : TagsConfig->EventTags.Tags)
@@ -84,7 +84,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 			}
 		}
 
-		// 技能标签
+		// 鎶€鑳芥爣绛?
 		if (TagsConfig->SkillTags.bEnabled)
 		{
 			for (const auto& Entry : TagsConfig->SkillTags.Tags)
@@ -96,7 +96,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 			}
 		}
 
-		// 效果标签
+		// 鏁堟灉鏍囩
 		if (TagsConfig->EffectTags.bEnabled)
 		{
 			for (const auto& Entry : TagsConfig->EffectTags.Tags)
@@ -110,10 +110,10 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 	}
 	else
 	{
-		// 硬编码模式（兼容）
+		// 纭紪鐮佹ā寮忥紙鍏煎锛?
 		UE_LOG(LogTemp, Log, TEXT("USoulGameTagsManager::Initialize - Using hardcoded mode"));
 
-		// 行为状态标签
+		// 琛屼负鐘舵€佹爣绛?
 		BehaviorTags.Add(TEXT("Idle"), FGameplayTag::RequestGameplayTag(TEXT("State.Behavior.Idle")));
 		BehaviorTags.Add(TEXT("Attack"), FGameplayTag::RequestGameplayTag(TEXT("State.Behavior.Attack")));
 		BehaviorTags.Add(TEXT("Rolling"), FGameplayTag::RequestGameplayTag(TEXT("State.Behavior.Rolling")));
@@ -121,17 +121,17 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 		BehaviorTags.Add(TEXT("Injury"), FGameplayTag::RequestGameplayTag(TEXT("State.Behavior.Injury")));
 		BehaviorTags.Add(TEXT("Dead"), FGameplayTag::RequestGameplayTag(TEXT("State.Behavior.Dead")));
 
-		// 武器状态标签
+		// 姝﹀櫒鐘舵€佹爣绛?
 		WeaponTags.Add(TEXT("None"), FGameplayTag::RequestGameplayTag(TEXT("State.Weapon.None")));
 		WeaponTags.Add(TEXT("Melee"), FGameplayTag::RequestGameplayTag(TEXT("State.Weapon.Melee")));
 		WeaponTags.Add(TEXT("Sword"), FGameplayTag::RequestGameplayTag(TEXT("State.Weapon.Sword")));
 
-		// 战斗状态标签
+		// 鎴樻枟鐘舵€佹爣绛?
 		CombatTags.Add(TEXT("None"), FGameplayTag::RequestGameplayTag(TEXT("State.Combat.None")));
 		CombatTags.Add(TEXT("Normal"), FGameplayTag::RequestGameplayTag(TEXT("State.Combat.Normal")));
 		CombatTags.Add(TEXT("Boss"), FGameplayTag::RequestGameplayTag(TEXT("State.Combat.Boss")));
 
-		// 事件标签
+		// 浜嬩欢鏍囩
 		EventTags.Add(TEXT("Damage"), FGameplayTag::RequestGameplayTag(TEXT("Event.Damage")));
 		EventTags.Add(TEXT("Dead"), FGameplayTag::RequestGameplayTag(TEXT("Event.Dead")));
 		EventTags.Add(TEXT("Respawn"), FGameplayTag::RequestGameplayTag(TEXT("Event.Respawn")));
@@ -140,7 +140,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 		EventTags.Add(TEXT("LockOn"), FGameplayTag::RequestGameplayTag(TEXT("Event.LockOn")));
 		EventTags.Add(TEXT("Dodge"), FGameplayTag::RequestGameplayTag(TEXT("Event.Dodge")));
 
-		// 技能标签
+		// 鎶€鑳芥爣绛?
 		SkillTags.Add(TEXT("MeleeCombo"), FGameplayTag::RequestGameplayTag(TEXT("Skill.Melee.Combo")));
 		SkillTags.Add(TEXT("MeleeHeavy"), FGameplayTag::RequestGameplayTag(TEXT("Skill.Melee.Heavy")));
 		SkillTags.Add(TEXT("SwordCombo"), FGameplayTag::RequestGameplayTag(TEXT("Skill.Sword.Combo")));
@@ -150,7 +150,7 @@ void USoulGameTagsManager::Initialize(bool bInUseDataAsset)
 		SkillTags.Add(TEXT("DefenseBlock"), FGameplayTag::RequestGameplayTag(TEXT("Skill.Defense.Block")));
 		SkillTags.Add(TEXT("DefenseParry"), FGameplayTag::RequestGameplayTag(TEXT("Skill.Defense.Parry")));
 
-		// 效果标签
+		// 鏁堟灉鏍囩
 		EffectTags.Add(TEXT("Bleeding"), FGameplayTag::RequestGameplayTag(TEXT("Effect.Bleeding")));
 		EffectTags.Add(TEXT("Burning"), FGameplayTag::RequestGameplayTag(TEXT("Effect.Burning")));
 		EffectTags.Add(TEXT("Frozen"), FGameplayTag::RequestGameplayTag(TEXT("Effect.Frozen")));
@@ -167,7 +167,7 @@ void USoulGameTagsManager::SetTagsConfig(USoulTagsConfig* InConfig)
 	TagsConfig = InConfig;
 	if (TagsConfig && bUseDataAssetMode)
 	{
-		// 重新初始化
+		// 閲嶆柊鍒濆鍖?
 		Initialize(true);
 	}
 }
@@ -181,7 +181,7 @@ FGameplayTagContainer USoulGameTagsManager::GetAllTags() const
 		return TagsConfig->GetAllTags();
 	}
 
-	// 硬编码模式
+	// 纭紪鐮佹ā寮?
 	for (const auto& Pair : BehaviorTags)
 	{
 		Container.AddTag(Pair.Value);
@@ -270,13 +270,13 @@ FGameplayTag USoulGameTagsManager::GetEffectTag(const FName& EffectName) const
 
 FText USoulGameTagsManager::GetTagDisplayName(const FGameplayTag& Tag) const
 {
-	// 首先尝试从 DataAsset 获取
+	// 棣栧厛灏濊瘯浠?DataAsset 获取
 	if (bUseDataAssetMode && TagsConfig)
 	{
-		// 遍历查找匹配的标签
+		// 閬嶅巻鏌ユ壘鍖归厤鐨勬爣绛?
 		// ...
 	}
 
-	// 默认返回标签名
+	// 榛樿杩斿洖鏍囩鍚?
 	return FText::FromName(Tag.GetTagName());
 }

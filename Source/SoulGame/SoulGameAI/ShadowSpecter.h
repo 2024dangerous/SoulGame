@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #include "ShadowSpecter.generated.h"
 
 /**
- * Ó°÷Í
+ * å½±é­
  */
 class UNiagaraComponent;
 class UBoxComponent;
@@ -29,12 +29,16 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     UNiagaraComponent* SwordNiagara;
     UPROPERTY(EditDefaultsOnly,BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    UStaticMeshComponent* SwordSheath;  //½£ÇÊ
+    UStaticMeshComponent* SwordSheath;  //å‰‘é˜
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Items")
 	UBoxComponent* SwordAttackBox;
 
-	//UMaterialInterface* CurrentWeaponMaterial;  //µ±Ç°ÎäÆ÷²ÄÖÊ
-	UMaterialInterface* ChangeWeaponMaterial;   //ÇĞ»»ÎäÆ÷Ê±µÄ²ÄÖÊ
+	//åˆ‡æ¢æ­¦å™¨æ—¶çš„ç‰¹æ•ˆæè´¨ï¼ˆç¼–è¾‘å™¨å¯é…ç½®ï¼‰
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Material")
+	TSoftObjectPtr<UMaterialInterface> ChangeWeaponMaterialAsset;
+	//åˆ‡æ¢æ­¦å™¨æ—¶çš„æè´¨ï¼ˆè¿è¡Œæ—¶ç¼“å­˜ï¼‰
+	UPROPERTY(Transient)
+	UMaterialInterface* ChangeWeaponMaterial;
 
 	UFUNCTION()
 	void StartBattle(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -42,7 +46,7 @@ public:
 	UFUNCTION()
 	void EndBattle(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	//³õÊ¼»¯¶¯»­ÃÉÌ«Ææ£¬¶ÁÈ¡Êı¾İ±í
+	//åˆå§‹åŒ–åŠ¨ç”»è’™å¤ªå¥‡ï¼Œè¯»å–æ•°æ®è¡¨
 	virtual void InitAnimMontage() override;
 
 	virtual void Injure(float SubHealth) override;
@@ -59,36 +63,36 @@ public:
 	void ResetAttack();
 
 
-	FVector InitLocation; //³õÊ¼Î»ÖÃ  
+	FVector InitLocation; //åˆå§‹ä½ç½®  
 private:
 
-	FSoulActionType* EquipAnims;          //°Î½£¶¯»­
-    FSoulActionType* MeleeAttackAnims;    //½üÕ½¹¥»÷¶¯»­
-    FSoulActionType* MeleeRollingAnims;   //½üÕ½·­¹ö¶¯»­
-    FSoulActionType* SwordAttackAnims;    //µ¥ÊÖ½£¹¥»÷¶¯»­
-    FSoulActionType* SwordRollingAnims;   //µ¥ÊÖ½£·­¹ö¶¯»­
-    FSoulActionType* RushAttackAnims;     //³å´Ì¹¥»÷¶¯»­
-    FSoulActionType* InjuryAnims;         //ÊÜÉË¶¯»­
-    FSoulActionType* DenfenseAnims;       //·ÀÓù¶¯»­
+	FSoulActionType* EquipAnims;          //æ‹”å‰‘åŠ¨ç”»
+    FSoulActionType* MeleeAttackAnims;    //è¿‘æˆ˜æ”»å‡»åŠ¨ç”»
+    FSoulActionType* MeleeRollingAnims;   //è¿‘æˆ˜ç¿»æ»šåŠ¨ç”»
+    FSoulActionType* SwordAttackAnims;    //å•æ‰‹å‰‘æ”»å‡»åŠ¨ç”»
+    FSoulActionType* SwordRollingAnims;   //å•æ‰‹å‰‘ç¿»æ»šåŠ¨ç”»
+    FSoulActionType* RushAttackAnims;     //å†²åˆºæ”»å‡»åŠ¨ç”»
+    FSoulActionType* InjuryAnims;         //å—ä¼¤åŠ¨ç”»
+    FSoulActionType* DefenseAnims;        //é˜²å¾¡åŠ¨ç”»
 	
-	int32 LastMeleeAttackIndex = -1;       //ÉÏ´ÎÈ­½Å¹¥»÷µÄË÷Òı
-	int32 LastSwordAttackIndex = -1;       //ÉÏ´Îµ¥ÊÖ½£¹¥»÷µÄË÷Òı
+	int32 LastMeleeAttackIndex = -1;       //ä¸Šæ¬¡æ‹³è„šæ”»å‡»çš„ç´¢å¼•
+	int32 LastSwordAttackIndex = -1;       //ä¸Šæ¬¡å•æ‰‹å‰‘æ”»å‡»çš„ç´¢å¼•
 	int32 LastAnimationIndex = -1;
 
-	// ²¥·ÅËæ»ú¶¯»­
+	// æ’­æ”¾éšæœºåŠ¨ç”»
 	bool PlayRandomAnimMontage(FSoulActionType* CurrentAnimMontage, int32& LastAnimMontageIndex);
 
 
     
 public:
 	UPROPERTY(BlueprintReadOnly,Category = "AttackTarget")
-    ASoulBaseCharacter* AttackTarget; //¹¥»÷Ä¿±ê
+    ASoulBaseCharacter* AttackTarget; //æ”»å‡»ç›®æ ‡
 
 	UPROPERTY(BlueprintReadOnly,Category = "AttackTarget")
-    TSubclassOf<ASoulBaseCharacter> InsPlayer; //¹¥»÷Ä¿±ê
+    TSubclassOf<ASoulBaseCharacter> InsPlayer; //æ”»å‡»ç›®æ ‡
 
-    FTimerHandle ObserverHandle; //¹Û²ìÕß¼ÆÊ±Æ÷¾ä±ú
-    FTimerHandle CloseObserverHandle; //¹Ø±Õ¹Û²ìÕß¼ÆÊ±Æ÷¾ä±ú
+    FTimerHandle ObserverHandle; //è§‚å¯Ÿè€…è®¡æ—¶å™¨å¥æŸ„
+    FTimerHandle CloseObserverHandle; //å…³é—­è§‚å¯Ÿè€…è®¡æ—¶å™¨å¥æŸ„
 
 	void EnableObServer();
 
@@ -96,7 +100,9 @@ public:
 
 	void EndObserver();
 
-	int32 RandeomStrafeValue;
+	float RandomStrafeValue;
 
 	void Running(bool IsRun);
+
+	//è®¾ç½®æ”»å‡»ç›®æ ‡
 };

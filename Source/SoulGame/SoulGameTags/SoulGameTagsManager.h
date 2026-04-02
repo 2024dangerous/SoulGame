@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -13,9 +13,9 @@ class USoulTagsConfig;
  * SoulGameTagsManager - GameplayTags 管理单例
  * 提供获取和注册游戏标签的接口
  * 
- * 支持两种模式：
- * 1. DataAsset 模式（推荐）- 从 USoulTagsConfig 加载
- * 2. 硬编码模式（兼容）- 使用内置默认值
+ * 鏀寔涓ょ妯″紡锛?
+ * 1. DataAsset 模式（推荐）- 浠?USoulTagsConfig 加载
+ * 2. 纭紪鐮佹ā寮忥紙鍏煎锛? 浣跨敤鍐呯疆榛樿鍊?
  */
 UCLASS(Blueprintable, BlueprintType)
 class SOULGAME_API USoulGameTagsManager : public UObject
@@ -32,94 +32,94 @@ public:
 	static USoulGameTagsManager* Get();
 
 	/**
-	 * 初始化标签系统
-	 * @param bUseDataAsset 是否使用 DataAsset 配置（推荐开启）
+	 * 鍒濆鍖栨爣绛剧郴缁?
+	 * @param bUseDataAsset 鏄惁浣跨敤 DataAsset 閰嶇疆锛堟帹鑽愬紑鍚級
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	void Initialize(bool bUseDataAsset = true);
 
 	/**
-	 * 设置标签配置 DataAsset
+	 * 璁剧疆鏍囩閰嶇疆 DataAsset
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	void SetTagsConfig(USoulTagsConfig* InConfig);
 
 	/**
-	 * 获取当前标签配置
+	 * 鑾峰彇褰撳墠鏍囩閰嶇疆
 	 */
 	UFUNCTION(BlueprintPure, Category = "SoulGame|GameplayTags")
 	USoulTagsConfig* GetTagsConfig() const { return TagsConfig; }
 
-	// ============ 标签获取接口 ============
+	// ============ 鏍囩鑾峰彇鎺ュ彛 ============
 
-	// 获取所有注册的标签
+	// 鑾峰彇鎵€鏈夋敞鍐岀殑鏍囩
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTagContainer GetAllTags() const;
 
-	// 根据标签名获取标签（会尝试匹配已注册的标签）
+	// 鏍规嵁鏍囩鍚嶈幏鍙栨爣绛撅紙浼氬皾璇曞尮閰嶅凡娉ㄥ唽鐨勬爣绛撅級
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetTag(const FName& TagName) const;
 
-	// 获取行为状态标签
+	// 鑾峰彇琛屼负鐘舵€佹爣绛?
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetBehaviorTag(const FName& BehaviorName) const;
 
-	// 获取武器状态标签
+	// 鑾峰彇姝﹀櫒鐘舵€佹爣绛?
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetWeaponTag(const FName& WeaponName) const;
 
-	// 获取战斗状态标签
+	// 鑾峰彇鎴樻枟鐘舵€佹爣绛?
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetCombatTag(const FName& CombatName) const;
 
-	// 获取事件标签
+	// 鑾峰彇浜嬩欢鏍囩
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetEventTag(const FName& EventName) const;
 
-	// 获取技能标签
+	// 鑾峰彇鎶€鑳芥爣绛?
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetSkillTag(const FName& SkillName) const;
 
-	// 获取效果标签
+	// 鑾峰彇鏁堟灉鏍囩
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FGameplayTag GetEffectTag(const FName& EffectName) const;
 
-	// 获取标签显示名
+	// 鑾峰彇鏍囩鏄剧ず鍚?
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|GameplayTags")
 	FText GetTagDisplayName(const FGameplayTag& Tag) const;
 
-	// ============ 标签缓存 ============
+	// ============ 鏍囩缂撳瓨 ============
 
 protected:
-	// 标签配置 DataAsset（可选）
+	// 鏍囩閰嶇疆 DataAsset（可选）
 	UPROPERTY()
 	USoulTagsConfig* TagsConfig;
 
-	// 是否使用 DataAsset 模式
+	// 鏄惁浣跨敤 DataAsset 模式
 	UPROPERTY()
 	bool bUseDataAssetMode;
 
-	// 行为状态标签缓存
+	// 琛屼负鐘舵€佹爣绛剧紦瀛?
 	UPROPERTY()
 	TMap<FName, FGameplayTag> BehaviorTags;
 
-	// 武器状态标签缓存
+	// 姝﹀櫒鐘舵€佹爣绛剧紦瀛?
 	UPROPERTY()
 	TMap<FName, FGameplayTag> WeaponTags;
 
-	// 战斗状态标签缓存
+	// 鎴樻枟鐘舵€佹爣绛剧紦瀛?
 	UPROPERTY()
 	TMap<FName, FGameplayTag> CombatTags;
 
-	// 事件标签缓存
+	// 浜嬩欢鏍囩缂撳瓨
 	UPROPERTY()
 	TMap<FName, FGameplayTag> EventTags;
 
-	// 技能标签缓存
+	// 鎶€鑳芥爣绛剧紦瀛?
 	UPROPERTY()
 	TMap<FName, FGameplayTag> SkillTags;
 
-	// 效果标签缓存
+	// 鏁堟灉鏍囩缂撳瓨
 	UPROPERTY()
 	TMap<FName, FGameplayTag> EffectTags;
 

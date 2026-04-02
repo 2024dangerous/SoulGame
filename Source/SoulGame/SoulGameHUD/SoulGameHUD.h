@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -29,7 +29,7 @@ private:
     TArray<UUserWidget*> CurrentlyActiveUI;
 
 public:
-    //»ñÈ¡µ±Ç°µÄUI_FightMainUI
+    //è·å–å½“å‰çš„UI_FightMainUI
     UFUNCTION(BlueprintCallable, BlueprintPure)
     UUI_FightMainUI* GetUI_FightMainUI() const { return UI_FightMainUI; };
 

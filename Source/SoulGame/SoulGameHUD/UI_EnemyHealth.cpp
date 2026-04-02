@@ -1,10 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SoulGameHUD/UI_EnemyHealth.h"
-#include "../../../../../../../Source/Runtime/UMG/Public/Components/TextBlock.h"
-#include "../../../../../../../Source/Runtime/UMG/Public/Components/ProgressBar.h"
-#include "../../../../../../../Source/Runtime/Experimental/ChaosCore/Public/Chaos/Vector.h"
+#include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
 
 void UUI_EnemyHealth::NativeConstruct()
 {
@@ -22,10 +21,10 @@ void UUI_EnemyHealth::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     {
         NowHealthPercent = FMath::FInterpTo(NowHealthPercent, TargetHealthPercent, InDeltaTime, 2.0f);
         EnemyHealth->SetPercent(NowHealthPercent);
-        // ¸Ä½ø£º±ÜÃâ¸¡µãÊý±È½ÏÎÊÌâ
+        // ç›®æ ‡æŽ¥è¿‘æ—¶æµ®ç‚¹ç²¾åº¦åˆ¤æ–­
         if (FMath::IsNearlyEqual(NowHealthPercent, TargetHealthPercent, 0.001f))
         {
-            NowHealthPercent = TargetHealthPercent; // ±£Ö¤ÊÕÎ²Ò»ÖÂ
+            NowHealthPercent = TargetHealthPercent; // ä¿è¯æœ€ç»ˆä¸€è‡´
             EnemyHealth->SetPercent(NowHealthPercent);
             bIsEnemyHealthChaneing = false;
         }

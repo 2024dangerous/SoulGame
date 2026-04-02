@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -21,15 +21,15 @@ public:
 
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
-	 //×´Ì¬À¸ÎÄ×Ö
+	 //çŠ¶æ€æ æ–‡å­—
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta= (BindWidget),Category = "Enemy|Attribute")
 	UTextBlock* EnemyName;
 
-	 //×´Ì¬À¸ÑªÌõ
+	 //çŠ¶æ€æ è¡€æ¡
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,meta= (BindWidget), Category = "Enemy|Attribute")
 	UProgressBar* EnemyHealth;
 	
-    float NowHealthPercent; //µ±Ç°ÑªÁ¿°Ù·Ö±È
+    float NowHealthPercent; //å½“å‰è¡€é‡ç™¾åˆ†æ¯”
 
 	float TargetHealthPercent; 
 

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -8,8 +8,8 @@
 #include "SoulTagsConfig.generated.h"
 
 /**
- * 标签配置结构体
- * 用于在 DataAsset 中配置单个标签
+ * 鏍囩閰嶇疆缁撴瀯浣?
+ * 鐢ㄤ簬鍦?DataAsset 涓厤缃崟涓爣绛?
  */
 USTRUCT(BlueprintType)
 struct SOULGAME_API FTagConfigEntry
@@ -25,7 +25,7 @@ public:
 		, Description(InDescription)
 	{}
 
-	// 标签名称（不含前缀，如 "Idle", "Attack"）
+	// 鏍囩鍚嶇О锛堜笉鍚墠缂€锛屽 "Idle", "Attack"锛?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	FName TagName;
 
@@ -37,13 +37,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	FText Description;
 
-	// 是否启用
+	// 鏄惁鍚敤
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	bool bEnabled = true;
 };
 
 /**
- * 标签分类配置
+ * 鏍囩鍒嗙被閰嶇疆
  */
 USTRUCT(BlueprintType)
 struct SOULGAME_API FTagCategoryConfig
@@ -51,29 +51,29 @@ struct SOULGAME_API FTagCategoryConfig
 	GENERATED_BODY()
 
 public:
-	// 分类名称（如 "Behavior", "Weapon", "Combat"）
+	// 鍒嗙被鍚嶇О锛堝 "Behavior", "Weapon", "Combat"锛?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	FName CategoryName;
 
-	// 标签前缀（如 "State.Behavior", "State.Weapon"）
+	// 鏍囩鍓嶇紑锛堝 "State.Behavior", "State.Weapon"锛?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	FString TagPrefix;
 
-	// 该分类下的所有标签
+	// 璇ュ垎绫讳笅鐨勬墍鏈夋爣绛?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	TArray<FTagConfigEntry> Tags;
 
-	// 是否启用该分类
+	// 鏄惁鍚敤璇ュ垎绫?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tag")
 	bool bEnabled = true;
 };
 
 /**
- * SoulTagsConfig - 标签配置 DataAsset
+ * SoulTagsConfig - 鏍囩閰嶇疆 DataAsset
  * 
- * 替代 SoulGameTagsManager 中的硬编码标签配置
- * 支持通过 DataAsset 编辑器进行配置
- * 支持热更新
+ * 替代 SoulGameTagsManager 涓殑纭紪鐮佹爣绛鹃厤缃?
+ * 鏀寔閫氳繃 DataAsset 缂栬緫鍣ㄨ繘琛岄厤缃?
+ * 鏀寔鐑洿鏂?
  */
 UCLASS(BlueprintType, meta = (DisplayName = "Soul Tags Config"))
 class SOULGAME_API USoulTagsConfig : public USoulGameConfigBase
@@ -83,78 +83,78 @@ class SOULGAME_API USoulTagsConfig : public USoulGameConfigBase
 public:
 	USoulTagsConfig();
 
-	// ============ 配置内容 ============
+	// ============ 閰嶇疆鍐呭 ============
 
-	// 行为状态标签分类
+	// 琛屼负鐘舵€佹爣绛惧垎绫?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags|Behavior")
 	FTagCategoryConfig BehaviorTags;
 
-	// 武器状态标签分类
+	// 姝﹀櫒鐘舵€佹爣绛惧垎绫?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags|Weapon")
 	FTagCategoryConfig WeaponTags;
 
-	// 战斗状态标签分类
+	// 鎴樻枟鐘舵€佹爣绛惧垎绫?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags|Combat")
 	FTagCategoryConfig CombatTags;
 
-	// 事件标签分类
+	// 浜嬩欢鏍囩鍒嗙被
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags|Event")
 	FTagCategoryConfig EventTags;
 
-	// 技能标签分类
+	// 鎶€鑳芥爣绛惧垎绫?
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags|Skill")
 	FTagCategoryConfig SkillTags;
 
-	// 效果标签分类
+	// 鏁堟灉鏍囩鍒嗙被
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Tags|Effect")
 	FTagCategoryConfig EffectTags;
 
 	// ============ 便捷访问方法 ============
 
 	/**
-	 * 获取行为标签
+	 * 鑾峰彇琛屼负鏍囩
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetBehaviorTag(FName TagName) const;
 
 	/**
-	 * 获取武器标签
+	 * 鑾峰彇姝﹀櫒鏍囩
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetWeaponTag(FName TagName) const;
 
 	/**
-	 * 获取战斗标签
+	 * 鑾峰彇鎴樻枟鏍囩
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetCombatTag(FName TagName) const;
 
 	/**
-	 * 获取事件标签
+	 * 鑾峰彇浜嬩欢鏍囩
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetEventTag(FName TagName) const;
 
 	/**
-	 * 获取技能标签
+	 * 鑾峰彇鎶€鑳芥爣绛?
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetSkillTag(FName TagName) const;
 
 	/**
-	 * 获取效果标签
+	 * 鑾峰彇鏁堟灉鏍囩
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetEffectTag(FName TagName) const;
 
 	/**
-	 * 获取所有配置标签
+	 * 鑾峰彇鎵€鏈夐厤缃爣绛?
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTagContainer GetAllTags() const;
 
 	/**
-	 * 根据标签名获取标签
+	 * 鏍规嵁鏍囩鍚嶈幏鍙栨爣绛?
 	 */
 	UFUNCTION(BlueprintCallable, Category = "SoulGame|Tags")
 	FGameplayTag GetTag(FName TagName) const;

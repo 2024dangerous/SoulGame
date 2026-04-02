@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+ï»¿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -28,11 +28,11 @@ public:
 public:
 #pragma region "Component"
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    UStaticMeshComponent* Sword;   //½£
+    UStaticMeshComponent* Sword;   //å‰‘
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     UNiagaraComponent* SwordNiagara;
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    UStaticMeshComponent* SwordSheath; //½£ÇÊ
+    UStaticMeshComponent* SwordSheath; //å‰‘é˜
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Items")
     UBoxComponent* SwordAttackBox;
 
@@ -47,48 +47,40 @@ public:
 public:
     virtual void Look(const FInputActionValue& Value) override;
 
-    ASoulBaseEnemy* GetNextTargetEnemy(bool bIsRight);     //»ñÈ¡ÏÂÒ»¸öÄ¿±êµĞÈË
+    ASoulBaseEnemy* GetNextTargetEnemy(bool bIsRight);     //è·å–ä¸‹ä¸€ä¸ªç›®æ ‡æ•Œäºº
 
-    void SwitchTargetEnemy(bool bIsRight);       //ÇĞ»»Ä¿±êµĞÈË
+    void SwitchTargetEnemy(bool bIsRight);       //åˆ‡æ¢ç›®æ ‡æ•Œäºº
 
     virtual void Exit(const FInputActionValue& Value) override;
 #pragma region "Attack"
-    //¹¥»÷Âß¼­
+    //æ”»å‡»é€»è¾‘
     virtual void Attack() override;
-    //½üÕ½¹¥»÷Âß¼­
+    //è¿‘æˆ˜æ”»å‡»é€»è¾‘
     void MeleeAttack();
-    //ÊÇ·ñÄÜ½øĞĞ½üÕ½¹¥»÷
-    bool CanMeleeAttack();
-    //µ¶½£¹¥»÷Âß¼­
+    //åˆ€å‰‘æ”»å‡»é€»è¾‘
     void SwordAttack();
-    //ÊÇ·ñÄÜ½øĞĞµ¶½£¹¥»÷
-    bool CanSwordAttack();
-    //ÍË³ö¹¥»÷×´Ì¬
+    //é€€å‡ºæ”»å‡»çŠ¶æ€
     void ExitAttackState();
 #pragma endregion "Attack"
 #pragma region "Rolling"
-    //·­¹öÂß¼­
+    //ç¿»æ»šé€»è¾‘
     virtual void Rolling() override;
-    //½üÕ½·­¹öÂß¼­
+    //è¿‘æˆ˜ç¿»æ»šé€»è¾‘
     void MeleeRolling();
-    //µ¶½£·­¹öÂß¼­
+    //åˆ€å‰‘ç¿»æ»šé€»è¾‘
     void SwordRolling();
-    //ÊÇ·ñÄÜ½øĞĞ½üÕ½·­¹ö
-    bool CanMeleeRolling();
-    //ÊÇ·ñÄÜ½øĞĞµ¶½£·­¹ö
-    bool CanSwordRolling();
 #pragma endregion "Rolling"
 #pragma region "Defense"
-    //·­¹öÂß¼­
+    //ç¿»æ»šé€»è¾‘
     virtual void Defense(const FInputActionValue& Value) override;
-    //ÊÇ·ñÄÜ½øĞĞµ¶½£·­¹ö
+    //æ˜¯å¦èƒ½è¿›è¡Œåˆ€å‰‘ç¿»æ»š
     bool CanDefense();
-    //ÊÇ·ñÔÚ·ÀÓù×´Ì¬ 
+    //æ˜¯å¦åœ¨é˜²å¾¡çŠ¶æ€ 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Defense")
     bool bIsDefense;
 #pragma endregion "Defense"
 #pragma region "Weapons"
-    //ÇĞ»»ÎäÆ÷
+    //åˆ‡æ¢æ­¦å™¨
     virtual void Weapons() override;
 
     UFUNCTION(BlueprintCallable, Category = "Weapon")
@@ -97,33 +89,46 @@ public:
     void ChangeSwordWeaponType();
     void CloseSwordNiagara();
 
-    //ÊÇ·ñÄÜ½øĞĞÇĞ»»ÎäÆ÷
+    //æ˜¯å¦èƒ½è¿›è¡Œåˆ‡æ¢æ­¦å™¨
     bool CanWeapons();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 
-    bool bIsWeapons; //ÊÇ·ñÓĞÎäÆ÷
+    bool bIsWeapons; //æ˜¯å¦æœ‰æ­¦å™¨
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-    bool bIsChangingWeapons; //ÊÇ·ñÔÚÇĞ»»ÎäÆ÷
+    bool bIsChangingWeapons; //æ˜¯å¦åœ¨åˆ‡æ¢æ­¦å™¨
 
-    UMaterialInterface* CurrentWeaponMaterial;  //µ±Ç°ÎäÆ÷²ÄÖÊ
-    UMaterialInterface* CurrentSwordSheathMaterial;  //µ±Ç°ÎäÆ÷²ÄÖÊ
-    UMaterialInterface* ChangeWeaponMaterial;   //ÇĞ»»ÎäÆ÷Ê±µÄ²ÄÖÊ
+    //å½“å‰æ­¦å™¨æè´¨
+    UPROPERTY(Transient)
+    UMaterialInterface* CurrentWeaponMaterial;
+    //å½“å‰å‰‘é˜æè´¨
+    UPROPERTY(Transient)
+    UMaterialInterface* CurrentSwordSheathMaterial;
+    //åˆ‡æ¢æ­¦å™¨æ—¶çš„ç‰¹æ•ˆæè´¨ï¼ˆç¼–è¾‘å™¨å¯é…ç½®ï¼‰
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon|Material")
+    TSoftObjectPtr<UMaterialInterface> ChangeWeaponMaterialAsset;
+    //åˆ‡æ¢æ­¦å™¨æ—¶çš„æè´¨ï¼ˆè¿è¡Œæ—¶ç¼“å­˜ï¼‰
+    UPROPERTY(Transient)
+    UMaterialInterface* ChangeWeaponMaterial;
 #pragma endregion "Weapons"
 #pragma region "Focus"
-    //×¢ÊÓµĞÈË
+    //æ³¨è§†æ•Œäºº
     virtual void Focus() override;
 
     ASoulBaseEnemy* FocusedTarget = nullptr;
-    float AccumulatedMouseX = 0.0f; // ÀÛ¼ÆÊó±êºáÏòÒÆ¶¯Öµ
-    const float SwitchThreshold = 100.0f; // Éè¶¨Ò»¸öºÏÊÊµÄÇĞ»»ãĞÖµ£¨¿Éµ÷£©
+    float AccumulatedMouseX = 0.0f; // ç´¯è®¡é¼ æ ‡æ¨ªå‘ç§»åŠ¨å€¼
+    const float SwitchThreshold = 100.0f; // è®¾å®šä¸€ä¸ªåˆé€‚çš„åˆ‡æ¢é˜ˆå€¼ï¼ˆå¯è°ƒï¼‰
 
-    //³ÖĞø×¢ÊÓ
+    //æŒç»­æ³¨è§†
     void Focusing();
 
-    //Æ½»¬¿ªÊ¼×¢ÊÓ
+    //å¹³æ»‘å¼€å§‹æ³¨è§†
     void SetStartFocus();
+
+    // æ‰€æœ‰æ•Œäººç¦»å¼€æ„ŸçŸ¥èŒƒå›´æ—¶çš„å›è°ƒï¼ˆå–æ¶ˆé”å®šï¼‰
+    UFUNCTION()
+    void OnAllEnemiesLost();
 #pragma endregion "Focus"
 #pragma region "Injury"
     void Injury(FVector HitLocation, float Health_Sub);
@@ -140,46 +145,58 @@ public:
 #pragma endregion "Injury"
 private:
 #pragma region "Animation"
-    //¶¯×÷Êı¾İ±í
+    //åŠ¨ä½œæ•°æ®è¡¨
     UPROPERTY(EditAnywhere, BluePrintReadOnly, Category = AnimMontage, meta = (AllowPrivateAccess = "true"))
     UDataTable* StaminaCost;
 
-    //³õÊ¼»¯¶¯»­ÃÉÌ«Ææ£¬¶ÁÈ¡Êı¾İ±í
+    //åˆå§‹åŒ–åŠ¨ç”»è’™å¤ªå¥‡ï¼Œè¯»å–æ•°æ®è¡¨
     void InitAnimMontage();
-    FSoulActionType* MeleeAttackAnim;      //½üÕ½¹¥»÷¶¯»­
-    FSoulActionType* MeleeRollingAnim;     //½üÕ½·­¹ö¶¯»­
-    FSoulActionType* SwordAttackAnim;      //µ¶½£¹¥»÷¶¯»­
-    FSoulActionType* SwordRollingAnim;     //½üÕ½·­¹ö¶¯»­
-    FSoulActionType* MeleeInjuryAnim;          //½üÕ½ÊÜ»÷¶¯»­
-    FSoulActionType* MeleePreparwarInjuryAnim; //½üÕ½Õ½¶·ÊÜ»÷¶¯»­
-    FSoulActionType* SwordInjuryAnim;          //³Ö½£ÊÜ»÷¶¯»­
-    FSoulActionType* SwordDefenseInjuryAnim;          //³Ö½£ÊÜ»÷¶¯»­
+    FSoulActionType* MeleeAttackAnim;      //è¿‘æˆ˜æ”»å‡»åŠ¨ç”»
+    FSoulActionType* MeleeRollingAnim;     //è¿‘æˆ˜ç¿»æ»šåŠ¨ç”»
+    FSoulActionType* SwordAttackAnim;      //åˆ€å‰‘æ”»å‡»åŠ¨ç”»
+    FSoulActionType* SwordRollingAnim;     //åˆ€å‰‘ç¿»æ»šåŠ¨ç”»
+    FSoulActionType* MeleeInjuryAnim;          //è¿‘æˆ˜å—å‡»åŠ¨ç”»
+    FSoulActionType* MeleePreparwarInjuryAnim; //è¿‘æˆ˜æˆ˜æ–—å—å‡»åŠ¨ç”»
+    FSoulActionType* SwordInjuryAnim;          //æŒå‰‘å—å‡»åŠ¨ç”»
+    FSoulActionType* SwordDefenseInjuryAnim;          //æŒå‰‘é˜²å¾¡å—å‡»åŠ¨ç”»
 
-    int32 LastMeleeAttackIndex = -1;       //ÉÏ´ÎÈ­½Å¹¥»÷µÄË÷Òı
-    int32 LastSwordAttackIndex = -1;       //ÉÏ´Îµ¥ÊÖ½£¹¥»÷µÄË÷Òı
+    int32 LastMeleeAttackIndex = -1;       //ä¸Šæ¬¡æ‹³è„šæ”»å‡»çš„ç´¢å¼•
+    int32 LastSwordAttackIndex = -1;       //ä¸Šæ¬¡å•æ‰‹å‰‘æ”»å‡»çš„ç´¢å¼•
 
 #pragma endregion "Animation"
 
+#pragma region "Combat"
+    //é€šç”¨æ”»å‡»æ‰§è¡Œæ–¹æ³•ï¼ˆæ¶ˆé™¤ MeleeAttack/SwordAttack é‡å¤ä»£ç ï¼‰
+    void ExecuteAttack(FSoulActionType* ActionAnim, int32& LastIndex, bool bClearExitTimer = false);
+    //é€šç”¨ç¿»æ»šæ‰§è¡Œæ–¹æ³•ï¼ˆæ¶ˆé™¤ MeleeRolling/SwordRolling é‡å¤ä»£ç ï¼‰
+    void ExecuteRolling(FSoulActionType* RollingAnim);
+    //é€šç”¨åŠ¨ä½œæ£€æŸ¥æ–¹æ³•ï¼ˆæ¶ˆé™¤ CanMeleeAttack/CanSwordAttack/CanMeleeRolling/CanSwordRolling é‡å¤ä»£ç ï¼‰
+    bool CanExecuteAction(FSoulActionType* ActionAnim, bool bRequireWeapon = false, bool bRequireSwordType = false);
 
-    //¶¨Ê±Æ÷¾ä±ú
-    FTimerHandle ExitAttackStateTimerHandle; //ÍË³ö¹¥»÷×´Ì¬¶¨Ê±Æ÷¾ä±ú
-    FTimerHandle StaminaRestoreTimer;        //»Ö¸´ÌåÁ¦¶¨Ê±Æ÷¾ä±ú
-    FTimerHandle QieHuanWeapons;
+    //å‰‘æ”»å‡»ä¼¤å®³å€¼ï¼ˆå¯é…ç½®ï¼‰
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat", meta = (AllowPrivateAccess = "true"))
+    float SwordDamage = 30.f;
+#pragma endregion "Combat"
+
+    //å®šæ—¶å™¨å¥æŸ„
+    FTimerHandle ExitAttackStateTimerHandle; //é€€å‡ºæ”»å‡»çŠ¶æ€å®šæ—¶å™¨å¥æŸ„
+    FTimerHandle StaminaRestoreTimer;        //æ¢å¤ä½“åŠ›å®šæ—¶å™¨å¥æŸ„
+    FTimerHandle WeaponSwitchTimer;
     FTimerHandle CloseNiagaraWeapons;
 
 #pragma region "Function"
-    //»Ö¸´ÌåÁ¦
+    //æ¢å¤ä½“åŠ›
     void UpdateStaminaRestore();
 
-    // ²¥·ÅËæ»ú¶¯»­
+    // æ’­æ”¾éšæœºåŠ¨ç”»
     bool PlayRandomAnimMontage(FSoulActionType* CurrentAnimMontage, int32& LastAnimMontageIndex);
-    //»ñÈ¡·­¹ö¶¯»­Ë÷Òı
+    //è·å–ç¿»æ»šåŠ¨ç”»ç´¢å¼•
     int32 GetRollingAnimIndex(float ForwardValue, float RightValue);
-    //²¥·Å·­¹ö¶¯»­
+    //æ’­æ”¾ç¿»æ»šåŠ¨ç”»
     bool PlayRollingAnimMontage(FSoulActionType* CurrentAnimMontage);
     bool PlayInjuryAnimMontage(FSoulActionType* CurrentAnimMontage, FVector HitLocation);
 
-    //»ñÈ¡×î½üµĞÈË
+    //è·å–æœ€è¿‘æ•Œäºº
     ASoulBaseEnemy* GetNearestEnemy();
 
     int32 GetHitLocationAnimIndex(FVector HitLocation);
@@ -189,8 +206,5 @@ private:
 
     void RemovePlayerInput();
 
-    virtual void fhnaof() override;
-    UFUNCTION(BlueprintCallable)
-    void danhfafa();
 #pragma endregion "Function"
 };

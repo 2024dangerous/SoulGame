@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+﻿// Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "SoulGameData/SoulGameplayConfig.h"
 
@@ -37,7 +37,7 @@ USoulGameplayConfig::USoulGameplayConfig()
 	bIsLoaded = true;
 }
 
-bool USoulGameplayConfig::ValidateConfig(FText& OutError)
+bool USoulGameplayConfig::ValidateConfig_Implementation(FText& OutError)
 {
 	// 验证玩家属性
 	if (PlayerAttributes.MaxHealth <= 0)
